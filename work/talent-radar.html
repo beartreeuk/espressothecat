@@ -1,0 +1,69 @@
+<!doctype html>
+<html lang="en-GB">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Talent Radar · Espresso the cat</title>
+<meta name="description" content="A sourcing tool for a recruiter friend. It finds engineers and researchers from their public work and explains the fit.">
+<meta name="theme-color" content="#1a1611">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Talent Radar · Espresso the cat">
+<meta property="og:description" content="A sourcing tool for a recruiter friend. It finds engineers and researchers from their public work and explains the fit.">
+<meta property="og:image" content="https://espressothecat.com/assets/talent-radar-sonar.jpg">
+<meta property="og:url" content="https://espressothecat.com/work/talent-radar.html">
+<link rel="canonical" href="https://espressothecat.com/work/talent-radar.html">
+<link rel="icon" href="/assets/favicon.svg" type="image/svg+xml">
+<link rel="stylesheet" href="/style.css">
+<script>document.documentElement.classList.add('js');</script>
+</head>
+<body class="case">
+<a class="skip" href="#main">Skip to the content</a>
+<header class="nav">
+  <div class="container">
+    <a class="wordmark" href="/" aria-label="Espresso the cat, home">espresso the cat</a>
+    <ul>
+      <li><a href="/#work" class="is-current">Work</a></li>
+      <li><a href="/#how">How I work</a></li>
+      <li><a href="/#espresso">Espresso</a></li>
+      <li><a href="/#hire">Hire me</a></li>
+    </ul>
+  </div>
+</header>
+
+<main id="main" class="container">
+  <header class="case-head">
+    <div>
+      <p class="eyebrow"><a href="/#work">Work</a> <span aria-hidden="true">&middot;</span> 2 of 7</p>
+      <h1>Talent Radar</h1>
+      <p class="lead">A sourcing tool for a recruiter friend. It finds engineers and researchers from their public work and explains the fit.</p>
+    </div>
+    <dl class="case-meta">
+      <div><dt>Status</dt><dd><span class="chip">Private, in progress</span></dd></div>
+      <div><dt>Stack</dt><dd class="stack">React, TypeScript, Node, then Go and Postgres</dd></div>
+    </dl>
+  </header>
+  <figure class="case-hero case-hero--demo"><div class="demo-frame"><iframe src="/work/demo/talent-radar.html" title="Talent Radar: a working copy of one screen, with made-up people" loading="lazy"></iframe></div><a class="demo-fallback" href="/work/demo/talent-radar.html"><img src="/assets/talent-radar-sonar.jpg" alt="A dark dashboard with concentric rings labelled Close match, Good match, Partial match and Far, dotted with candidates" loading="eager"><span class="btn btn--primary">Open the working demo</span></a><figcaption>The Sonar view, working: people placed by how well their public work matches one job. Click a dot, change the job, search, shortlist someone. Everyone in it is made up and the signals are redacted. <a href="/work/demo/talent-radar.html">Open it full screen.</a></figcaption></figure>
+  <div class="case-body">
+<section class="case-section" aria-labelledby="s0"><h2 id="s0">About</h2><div class="case-section__body"><p>Talent Radar is a private web app for one recruiter who places engineers and AI researchers at startups. It finds people from what they have published, scores how well that work matches a job ad, and gives him a short list to work from each day, with a plain-English reason for each person. He told me the only metric that matters is outreach worth his time, so the tool shows fewer, better people.</p><p>I build it with a partner. I own the product, the screens, the client relationship and the privacy side; he owns hosting, the data pipeline and most of the Go core. We both ship code.</p></div></section>
+<section class="case-section" aria-labelledby="s1"><h2 id="s1">What I did</h2><div class="case-section__body"><ul><li>Set the product direction with the recruiter, and said no to rebuilding things his existing tools already do.</li><li>Designed and built the screens: a person panel with a two-line “why”, a review card with keyboard and swipe decisions, and the Sonar rings that use words (Close match, Good match, Partial match, Far) instead of scores.</li><li>Wrote the data-protection paperwork: the DPIA, a legitimate interests assessment, the privacy notice, the processing agreement and the records of processing.</li><li>Turned the privacy rules into code: no email harvesting, no LinkedIn scraping, no SMS, no data brokers. Retention of 30, 90 and 365 days built in. Model reads stay off until the recruiter signs the DPIA.</li><li>Built the demo mode with made-up people and ten weeks of fake pipeline, so the app can be developed and shown without a real record. The Sonar at the top of this page is a copy of it that I rebuilt in plain JavaScript.</li><li>Made the call to rebuild the core in Go, so the rules are enforced by the build rather than by habit.</li></ul></div></section>
+<section class="case-section" aria-labelledby="s2"><h2 id="s2">Stack</h2><div class="case-section__body"><ul><li>React and TypeScript (Vite, Tailwind, shadcn, TanStack)</li><li>Node, then Go with Postgres</li><li>Playwright end-to-end tests and an accessibility check</li><li>Claude Code for the build, with a bot review on every pull request</li></ul></div></section>
+<section class="case-section" aria-labelledby="s3"><h2 id="s3">Skills</h2><div class="case-section__body"><ul><li>Product ownership with a real user and a real deadline</li><li>UK GDPR in practice: DPIA, lawful basis, retention</li><li>Designing for low reading load: calm, short screens, dark mode</li><li>Working in two lanes with a partner through pull requests</li></ul></div></section>
+  </div>
+  
+  <nav class="case-foot" aria-label="More work"><a class="btn btn--quiet" href="/#work">Back to the work</a><a class="btn btn--primary" href="/work/harness.html">Next: A harness for Claude Code</a></nav>
+</main>
+
+<footer class="footer footer--slim">
+  <div class="container">
+    <p class="footer__mast">espresso the cat</p>
+    <div class="footer__links">
+      <a href="https://github.com/beartreeuk">GitHub</a>
+      <a href="mailto:hello@espressothecat.com">hello@espressothecat.com</a>
+      <a href="/work/this-site.html">How this site was made</a>
+      <small>Every screenshot and demo uses made-up data or public game data.</small>
+    </div>
+  </div>
+</footer>
+<script data-goatcounter="https://espressothecat.goatcounter.com/count" async src="//gc.zgo.at/count.js"></script>
+</body>
+</html>

@@ -1,0 +1,74 @@
+<!doctype html>
+<html lang="en-GB">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Fractal MCP · Espresso the cat</title>
+<meta name="description" content="A render farm for maths art that Claude can call like a tool.">
+<meta name="theme-color" content="#1a1611">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Fractal MCP · Espresso the cat">
+<meta property="og:description" content="A render farm for maths art that Claude can call like a tool.">
+<meta property="og:image" content="https://espressothecat.com/assets/three-body.jpg">
+<meta property="og:url" content="https://espressothecat.com/work/fractal-mcp.html">
+<link rel="canonical" href="https://espressothecat.com/work/fractal-mcp.html">
+<link rel="icon" href="/assets/favicon.svg" type="image/svg+xml">
+<link rel="stylesheet" href="/style.css">
+<script>document.documentElement.classList.add('js');</script>
+</head>
+<body class="case">
+<a class="skip" href="#main">Skip to the content</a>
+<header class="nav">
+  <div class="container">
+    <a class="wordmark" href="/" aria-label="Espresso the cat, home">espresso the cat</a>
+    <ul>
+      <li><a href="/#work" class="is-current">Work</a></li>
+      <li><a href="/#how">How I work</a></li>
+      <li><a href="/#espresso">Espresso</a></li>
+      <li><a href="/#hire">Hire me</a></li>
+    </ul>
+  </div>
+</header>
+
+<main id="main" class="container">
+  <header class="case-head">
+    <div>
+      <p class="eyebrow"><a href="/#work">Work</a> <span aria-hidden="true">&middot;</span> 7 of 7</p>
+      <h1>Fractal MCP</h1>
+      <p class="lead">A render farm for maths art that Claude can call like a tool.</p>
+    </div>
+    <dl class="case-meta">
+      <div><dt>Status</dt><dd><span class="chip">Running as a Windows service</span></dd></div>
+      <div><dt>Stack</dt><dd class="stack">Node, Python, OpenCL, MCP, Mandelbulber 2, Fraktaler 3</dd></div>
+    </dl>
+  </header>
+  <figure class="case-hero"><img src="/assets/three-body.jpg" alt="A symmetrical blue fractal of swirling bands around two bright discs" loading="eager"><figcaption>The three-body problem, mapped: the colour at each point is how long until the sixth close pass.</figcaption></figure>
+  <div class="case-body">
+<section class="case-section" aria-labelledby="s0"><h2 id="s0">About</h2><div class="case-section__body"><p>Fractal MCP is a server on my PC that exposes the renderers I have collected (Mandelbulber 2, Fraktaler 3, a three-body simulator, a Clifford attractor engine, a nebulabrot renderer) as tools Claude can call. I ask for a picture in a sentence, Claude picks the tool and the parameters, the GPU renders it, and the image comes back into the conversation.</p><p>The server is token-protected and set up so two friends can point their own Claude at it. Every render on the home page came out of it, and the live hero is the same Clifford maths running in your browser.</p></div></section>
+<section class="case-section" aria-labelledby="s1"><h2 id="s1">What I did</h2><div class="case-section__body"><ul><li>Chose and installed the renderers, and had Claude Code wrap each one as a tool with safe parameters: no file paths, one GPU job at a time, output confined to one folder.</li><li>Built the three-body and Clifford renderers in Python and OpenCL, including the palettes.</li><li>Wrote the hand-over page so friends could set it up.</li><li>Ported the Clifford attractor to WebGL for this site’s hero, and to a live desktop wallpaper.</li></ul><figure class="term"><pre class="term__screen"><code><span class="line line--in">&gt; render a clifford attractor in espresso’s eye colour, silk-like, 4k</span>
+<span class="line">fractal.clifford  a=-1.7 b=1.3 c=-0.1 d=-1.2  palette=espresso  size=3840x2160</span>
+<span class="line">  queued, 1 of 1 · GPU · 1.2 billion points</span>
+<span class="line">  done in 9 s → out/clifford-0412.png</span>
+<span class="line line--ok">Image attached. Want it looser, tighter, or another seed?</span></code></pre><figcaption>A render call. Tool, parameters and queue are real; the numbers are a sample.</figcaption></figure></div></section>
+<section class="case-section" aria-labelledby="s2"><h2 id="s2">Stack</h2><div class="case-section__body"><ul><li>Node and the MCP SDK</li><li>Python with OpenCL and moderngl on the GPU</li><li>Mandelbulber 2 and Fraktaler 3 driven from the command line</li><li>WebGL2 for the browser version</li></ul></div></section>
+<section class="case-section" aria-labelledby="s3"><h2 id="s3">Skills</h2><div class="case-section__body"><ul><li>Turning a vague wish into parameters and a finished image</li><li>Running a service safely on a home network</li><li>Judgement: knowing when a render is finished and when it is not worth keeping</li></ul></div></section>
+  </div>
+  <section class="case-gallery-section" aria-label="Gallery"><div class="case-gallery"><figure><img src="/assets/nebulabrot.jpg" alt="A glowing orange and teal cloud shape on dark blue, mirrored left to right" loading="lazy"><figcaption>Nebulabrot, 33 billion samples, card kept under 72°C.</figcaption></figure><figure><img src="/assets/clifford-3.jpg" alt="A ball of fine yellow-green threads looping over each other" loading="lazy"><figcaption>Clifford attractor, billions of points.</figcaption></figure><figure><img src="/assets/rabbits.jpg" alt="The Mandelbrot set above a chart of rabbit populations, each split lining up under a bulb" loading="lazy"><figcaption>Rabbits and the Mandelbrot set are the same maths.</figcaption></figure><figure><img src="/assets/nebulabrot-ice.jpg" alt="A pale blue glowing Mandelbrot shape on black" loading="lazy"><figcaption>Buddhabrot, in ice.</figcaption></figure></div></section>
+
+  <nav class="case-foot" aria-label="More work"><a class="btn btn--quiet" href="/#work">Back to the work</a><a class="btn btn--primary" href="/work/back-office.html">Next: Back-office tools</a></nav>
+</main>
+
+<footer class="footer footer--slim">
+  <div class="container">
+    <p class="footer__mast">espresso the cat</p>
+    <div class="footer__links">
+      <a href="https://github.com/beartreeuk">GitHub</a>
+      <a href="mailto:hello@espressothecat.com">hello@espressothecat.com</a>
+      <a href="/work/this-site.html">How this site was made</a>
+      <small>Every screenshot and demo uses made-up data or public game data.</small>
+    </div>
+  </div>
+</footer>
+<script data-goatcounter="https://espressothecat.goatcounter.com/count" async src="//gc.zgo.at/count.js"></script>
+</body>
+</html>

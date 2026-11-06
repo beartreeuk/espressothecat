@@ -1,0 +1,70 @@
+<!doctype html>
+<html lang="en-GB">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>MetaLoL · Espresso the cat</title>
+<meta name="description" content="A new front end for a public League of Legends stats site, the sister of MetaTFT.">
+<meta name="theme-color" content="#1a1611">
+<meta property="og:type" content="article">
+<meta property="og:title" content="MetaLoL · Espresso the cat">
+<meta property="og:description" content="A new front end for a public League of Legends stats site, the sister of MetaTFT.">
+<meta property="og:image" content="https://espressothecat.com/assets/metalol-tier-list.jpg">
+<meta property="og:url" content="https://espressothecat.com/work/metalol.html">
+<link rel="canonical" href="https://espressothecat.com/work/metalol.html">
+<link rel="icon" href="/assets/favicon.svg" type="image/svg+xml">
+<link rel="stylesheet" href="/style.css">
+<script>document.documentElement.classList.add('js');</script>
+</head>
+<body class="case">
+<a class="skip" href="#main">Skip to the content</a>
+<header class="nav">
+  <div class="container">
+    <a class="wordmark" href="/" aria-label="Espresso the cat, home">espresso the cat</a>
+    <ul>
+      <li><a href="/#work" class="is-current">Work</a></li>
+      <li><a href="/#how">How I work</a></li>
+      <li><a href="/#espresso">Espresso</a></li>
+      <li><a href="/#hire">Hire me</a></li>
+    </ul>
+  </div>
+</header>
+
+<main id="main" class="container">
+  <header class="case-head">
+    <div>
+      <p class="eyebrow"><a href="/#work">Work</a> <span aria-hidden="true">&middot;</span> 4 of 7</p>
+      <h1>MetaLoL</h1>
+      <p class="lead">A new front end for a public League of Legends stats site, the sister of MetaTFT.</p>
+    </div>
+    <dl class="case-meta">
+      <div><dt>Status</dt><dd><span class="chip">On a branch, awaiting the owner’s review</span></dd></div>
+      <div><dt>Stack</dt><dd class="stack">React 19, TypeScript, Vite</dd></div>
+    </dl>
+  </header>
+  <figure class="case-hero"><img src="/assets/metalol-tier-list.jpg" alt="A dark table of League of Legends champions ranked by tier with win rate, pick rate and games columns" loading="eager"><figcaption>The champion tier list in the remake. Live public game data.</figcaption></figure>
+  <div class="case-body">
+<section class="case-section" aria-labelledby="s0"><h2 id="s0">About</h2><div class="case-section__body"><p>MetaLoL is a public stats site for League of Legends, run by the same person as MetaTFT, one of the main stats sites for Teamfight Tactics. I contribute under my own GitHub account. In 2025 I made small fixes to the champion page on the live site. In September 2026 I started a ground-up remake of the front end on a branch: a new look, a tier list, champion pages, a header champion finder, a phone layout and a test suite.</p><p>The owner has not reviewed it yet, so it is not live.</p></div></section>
+<section class="case-section" aria-labelledby="s1"><h2 id="s1">What I did</h2><div class="case-section__body"><ul><li>Mapped the three repos (front end, API, crawler) and reported two security problems to the owner, who fixed them.</li><li>Rebuilt the front end against the live API: tier list, champion pages, matchup views, header search, page titles and metadata.</li><li>Checked the phone layout at real sizes. No sideways scroll at 390 pixels.</li><li>Typecheck, lint, 31 tests and a production build all pass.</li></ul></div></section>
+<section class="case-section" aria-labelledby="s2"><h2 id="s2">Stack</h2><div class="case-section__body"><ul><li>React 19 and TypeScript</li><li>Vite, with a test suite</li><li>Working against someone else’s API and data without cluster access</li><li>Claude Code for the build</li></ul></div></section>
+<section class="case-section" aria-labelledby="s3"><h2 id="s3">Skills</h2><div class="case-section__body"><ul><li>Working in someone else’s codebase, to their conventions</li><li>Front-end design that reads well on a phone</li><li>Finishing: tests, titles and metadata, not just the pretty parts</li><li>Reporting a problem to an owner clearly and leaving the fix to them</li></ul></div></section>
+  </div>
+  <section class="case-gallery-section" aria-label="Gallery"><div class="case-gallery"><figure><img src="/assets/metalol-home.jpg" alt="The MetaLoL home page in the remake, dark, with a champion search" loading="lazy"><figcaption>The home page.</figcaption></figure><figure><img src="/assets/metalol-champion.jpg" alt="A champion page with win rate, matchups and builds" loading="lazy"><figcaption>A champion page.</figcaption></figure><figure class="figure--tall"><img src="/assets/metalol-phone.jpg" alt="The tier list at phone width" loading="lazy"><figcaption>The tier list on a phone.</figcaption></figure></div></section>
+
+  <nav class="case-foot" aria-label="More work"><a class="btn btn--quiet" href="/#work">Back to the work</a><a class="btn btn--primary" href="/work/needle-drop.html">Next: Needle Drop</a></nav>
+</main>
+
+<footer class="footer footer--slim">
+  <div class="container">
+    <p class="footer__mast">espresso the cat</p>
+    <div class="footer__links">
+      <a href="https://github.com/beartreeuk">GitHub</a>
+      <a href="mailto:hello@espressothecat.com">hello@espressothecat.com</a>
+      <a href="/work/this-site.html">How this site was made</a>
+      <small>Every screenshot and demo uses made-up data or public game data.</small>
+    </div>
+  </div>
+</footer>
+<script data-goatcounter="https://espressothecat.goatcounter.com/count" async src="//gc.zgo.at/count.js"></script>
+</body>
+</html>

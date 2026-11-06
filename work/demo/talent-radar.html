@@ -1,0 +1,492 @@
+<!doctype html>
+<html lang="en-GB">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Talent Radar · Sonar demo</title>
+<meta name="description" content="A working copy of the Talent Radar Sonar view with made-up people, built for espressothecat.com.">
+<meta name="robots" content="noindex">
+<meta name="theme-color" content="#0b1118">
+<link rel="icon" href="/assets/favicon.svg" type="image/svg+xml">
+<style>
+@font-face { font-family: "Instrument Sans"; font-style: normal; font-weight: 400 700; font-display: swap; src: url("/assets/fonts/instrument-sans-latin.woff2") format("woff2"); unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD; }
+@font-face { font-family: "Instrument Sans"; font-style: normal; font-weight: 400 700; font-display: swap; src: url("/assets/fonts/instrument-sans-latin-ext.woff2") format("woff2"); unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C4, U+2113, U+2C60-2C7F, U+A720-A7FF; }
+:root {
+  --bg: #0b1118; --panel: #0f1722; --panel-2: #152030; --panel-3: #1b2838; --line: #223042; --line-2: #2c3d52;
+  --ink: #e7eef6; --ink-2: #b9c5d4; --muted: #8696ab; --accent: #8fd3ff; --accent-ink: #06202e; --green: #2f8f5f; --star: #ffd166;
+  --font: "Instrument Sans", ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+  --mono: ui-monospace, "Cascadia Mono", Consolas, "SF Mono", Menlo, monospace;
+  --rd-a: #1a2736; --rd-b: #121c28;
+}
+* { box-sizing: border-box; }
+html { color-scheme: dark; }
+html, body { margin: 0; }
+body { background: var(--bg); color: var(--ink); font: 400 14px/1.45 var(--font); -webkit-font-smoothing: antialiased; min-height: 100vh; }
+[hidden] { display: none !important; }
+.sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+button, select, input { font: inherit; color: inherit; }
+button { cursor: pointer; }
+.app { display: flex; flex-direction: column; height: 100vh; }
+html.embedded, html.embedded body { height: 100%; overflow: hidden; }
+html.embedded .app { height: 100%; min-height: 0; }
+html.embedded .foot { display: none; }
+
+/* top bar */
+.top { display: flex; align-items: center; gap: 10px; padding: 8px 14px; border-bottom: 1px solid var(--line); background: var(--panel); flex-wrap: wrap; }
+.brand { display: inline-flex; align-items: center; gap: 8px; font-weight: 700; letter-spacing: 0.01em; margin-right: 4px; }
+.brand svg { width: 22px; height: 22px; }
+.job { position: relative; display: inline-flex; align-items: center; }
+.job select { appearance: none; -webkit-appearance: none; background: var(--panel-2); border: 1px solid var(--line-2); border-radius: 8px; padding: 6px 30px 6px 10px; color: var(--ink); max-width: 56vw; text-overflow: ellipsis; }
+.job::after { content: ""; position: absolute; right: 11px; top: 50%; width: 7px; height: 7px; border-right: 1.5px solid var(--ink-2); border-bottom: 1.5px solid var(--ink-2); transform: translateY(-70%) rotate(45deg); pointer-events: none; }
+.chip-btn { display: inline-flex; align-items: center; gap: 6px; background: transparent; border: 1px solid transparent; border-radius: 8px; padding: 6px 10px; color: var(--ink-2); }
+.chip-btn:hover { background: var(--panel-2); color: var(--ink); }
+.chip-btn b { font-weight: 600; color: var(--ink); }
+.grow { flex: 1 1 auto; }
+.pill { display: inline-flex; align-items: center; gap: 6px; border-radius: 999px; padding: 4px 10px; font-size: 12px; color: var(--ink-2); border: 1px solid var(--line-2); background: var(--panel-2); white-space: nowrap; }
+.pill--demo::before { content: ""; width: 7px; height: 7px; border-radius: 50%; background: var(--star); box-shadow: 0 0 8px var(--star); }
+.link { background: none; border: 0; padding: 6px 8px; color: var(--muted); text-decoration: underline; text-underline-offset: 3px; }
+.link:hover { color: var(--ink); }
+
+/* filter bar */
+.bar { display: flex; align-items: center; gap: 10px; padding: 8px 14px; border-bottom: 1px solid var(--line); flex-wrap: wrap; }
+.seg { display: inline-flex; border: 1px solid var(--line-2); border-radius: 8px; overflow: hidden; background: var(--panel); }
+.seg button { background: transparent; border: 0; padding: 6px 11px; color: var(--ink-2); border-right: 1px solid var(--line); white-space: nowrap; }
+.seg button:last-child { border-right: 0; }
+.seg button b { font-weight: 600; color: var(--muted); margin-left: 4px; }
+.seg button[aria-pressed="true"] { background: var(--panel-3); color: var(--ink); box-shadow: inset 0 0 0 1px var(--line-2); }
+.seg button[aria-pressed="true"] b { color: var(--ink); }
+.seg button:hover { color: var(--ink); }
+.search { display: inline-flex; align-items: center; gap: 8px; background: var(--panel); border: 1px solid var(--line-2); border-radius: 8px; padding: 0 10px; min-width: 220px; flex: 0 1 300px; }
+.search svg { width: 15px; height: 15px; color: var(--muted); flex: none; }
+.search input { background: none; border: 0; outline: 0; padding: 7px 0; width: 100%; min-width: 0; }
+.search input::placeholder { color: var(--muted); }
+.seg--view button { display: inline-flex; align-items: center; gap: 6px; }
+.seg--view svg { width: 14px; height: 14px; }
+:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+/* stage */
+.stage { flex: 1 1 auto; min-height: 0; display: grid; gap: 12px; padding: 12px 14px 14px; grid-template-columns: 224px minmax(0, 1fr) 284px; grid-template-rows: minmax(0, 1fr); grid-template-areas: "explain radar card"; }
+.stage.is-list { grid-template-columns: minmax(0, 1fr) 284px; grid-template-areas: "list card"; }
+.stage.is-list .explain, .stage.is-list .radar { display: none; }
+.panel { background: var(--panel); border: 1px solid var(--line); border-radius: 12px; min-height: 0; }
+.explain { grid-area: explain; padding: 16px; overflow: auto; display: grid; align-content: start; gap: 14px; }
+.explain h2 { font-size: 15px; line-height: 1.3; margin: 0 0 6px; }
+.explain p { margin: 0; color: var(--ink-2); font-size: 13px; }
+.legend { list-style: none; margin: 0; padding: 0; display: grid; gap: 4px; }
+.legend li { display: flex; align-items: center; gap: 8px; padding: 3px 6px; margin: 0 -6px; border-radius: 6px; cursor: default; font-size: 13px; }
+.legend li:hover { background: var(--panel-2); }
+.legend li .swatch { width: 10px; height: 10px; border-radius: 50%; flex: none; }
+.legend li .n { margin-left: auto; font-weight: 600; font-variant-numeric: tabular-nums; }
+.sw-close { background: #e9f1f8; } .sw-good { background: #b8c9db; } .sw-partial { background: #8fa3b8; } .sw-far { background: #5e7189; } .sw-none { background: transparent; box-shadow: inset 0 0 0 1.5px #8fa3b8; }
+.notes { list-style: none; margin: 0; padding: 0; display: grid; gap: 8px; font-size: 12px; color: var(--muted); }
+.notes li { display: flex; gap: 8px; align-items: flex-start; }
+.notes .ico { flex: none; width: 10px; height: 10px; margin-top: 4px; border-radius: 50%; box-shadow: inset 0 0 0 1.5px #8fa3b8; }
+.notes .star-ico { flex: none; color: #fff; font-size: 12px; line-height: 1.5; width: 10px; text-align: center; }
+.explain .fine { font-size: 12px; color: var(--muted); border-top: 1px solid var(--line); padding-top: 12px; }
+
+.radar { grid-area: radar; position: relative; display: grid; place-items: center; min-height: 0; padding: 6px; }
+.radar svg { display: block; width: 100%; height: 100%; max-height: 100%; }
+.radar svg text { font-family: var(--font); }
+.area-label { font-size: 12.5px; font-weight: 600; fill: var(--ink-2); }
+.ring-label { font-size: 11px; fill: var(--ink-2); }
+.ring-pill { fill: var(--panel-2); fill-opacity: 0.92; stroke: var(--line-2); }
+.rings { pointer-events: none; }
+.ideal-label { font-size: 11px; fill: var(--ink); font-weight: 600; }
+.dot { transition: opacity 160ms ease; }
+.dot.is-dim { opacity: 0.14; }
+.dot--fill { fill: #d6e0ea; }
+.dot--hollow { fill: none; stroke: #9db0c5; stroke-width: 1.5; }
+.dot--star { fill: #fff; }
+.dot--fill:hover, .dot--hollow:hover { r: 6.5; }
+.dot[data-id] { cursor: pointer; }
+.sel-halo { fill: none; stroke: var(--accent); stroke-width: 1.5; }
+.sel-core { fill: var(--accent); }
+.sel-pill { fill: var(--panel-3); stroke: var(--line-2); }
+.sel-text { font-size: 12px; fill: var(--ink); font-weight: 600; }
+.sel-text tspan.pct { fill: var(--accent); font-weight: 600; }
+.tip { position: absolute; z-index: 2; pointer-events: none; background: var(--panel-3); border: 1px solid var(--line-2); border-radius: 8px; padding: 6px 9px; font-size: 12px; color: var(--ink); white-space: nowrap; box-shadow: 0 8px 24px rgba(0,0,0,.45); }
+.tip b { color: var(--accent); }
+.tip small { color: var(--muted); }
+
+.list { grid-area: list; overflow: auto; }
+.list table { width: 100%; border-collapse: collapse; font-size: 13px; }
+.list th { position: sticky; top: 0; background: var(--panel-2); text-align: left; font-weight: 600; color: var(--muted); font-size: 11px; text-transform: uppercase; letter-spacing: 0.06em; padding: 9px 12px; border-bottom: 1px solid var(--line); z-index: 1; }
+.list td { padding: 8px 12px; border-bottom: 1px solid var(--line); vertical-align: middle; }
+.list tr[tabindex] { cursor: pointer; }
+.list tr[tabindex]:hover td { background: var(--panel-2); }
+.list tr.is-sel td { background: var(--panel-3); box-shadow: inset 2px 0 0 var(--accent); }
+.list .name { font-weight: 600; white-space: nowrap; }
+.list .sub { color: var(--muted); font-size: 12px; }
+.list .pct { font-variant-numeric: tabular-nums; font-weight: 600; }
+.list .pct.none { color: var(--muted); font-weight: 400; }
+.list .star { color: #fff; margin-right: 4px; }
+.list .empty { padding: 24px; color: var(--muted); text-align: center; }
+
+.band { display: inline-flex; align-items: center; gap: 6px; border-radius: 999px; padding: 2px 9px; font-size: 12px; font-weight: 600; background: var(--panel-3); border: 1px solid var(--line-2); color: var(--ink); white-space: nowrap; }
+.band::before { content: ""; width: 8px; height: 8px; border-radius: 50%; background: currentColor; }
+.band--close { color: #e9f1f8; } .band--good { color: #b8c9db; } .band--partial { color: #8fa3b8; } .band--far { color: #6e8299; }
+.band--none { color: var(--muted); } .band--none::before { background: transparent; box-shadow: inset 0 0 0 1.5px currentColor; }
+
+.card { grid-area: card; padding: 16px; overflow: auto; display: grid; align-content: start; gap: 10px; }
+.card__eyebrow { display: flex; align-items: center; justify-content: space-between; margin: 0; font-size: 12px; color: var(--muted); }
+.card__eyebrow .link { padding: 0; font-size: 12px; }
+.card h2 { margin: 0; font-size: 19px; line-height: 1.2; }
+.card__sub { margin: 0; color: var(--ink-2); font-size: 13px; }
+.card__match { margin: 4px 0 0; font-size: 13px; color: var(--ink-2); display: flex; align-items: baseline; gap: 6px; }
+.card__match b { font-size: 30px; line-height: 1; font-weight: 700; color: var(--ink); letter-spacing: -0.01em; }
+.card__k { margin: 8px 0 0; font-size: 11px; text-transform: uppercase; letter-spacing: 0.06em; color: var(--muted); }
+.card__v { margin: 2px 0 0; }
+.card__ev { margin: 2px 0 0; font-size: 13px; color: var(--ink-2); line-height: 1.6; }
+.bars { list-style: none; margin: 4px 0 0; padding: 0; display: grid; gap: 5px; }
+.bars li { display: grid; grid-template-columns: minmax(0, 1fr) 72px; align-items: center; gap: 10px; font-size: 12px; color: var(--ink-2); }
+.bars li span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.bars li i { display: block; height: 6px; border-radius: 3px; background: var(--panel-3); position: relative; overflow: hidden; }
+.bars li i::after { content: ""; position: absolute; inset: 0; width: calc(var(--v) / 5 * 100%); background: linear-gradient(90deg, #6fb3e0, var(--accent)); border-radius: 3px; }
+.bars li.is-top span { color: var(--ink); font-weight: 600; }
+.card__fit { margin: 4px 0 0; font-size: 13px; color: var(--ink-2); }
+.card__actions { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 8px; }
+.btn { display: inline-flex; align-items: center; gap: 6px; border: 1px solid var(--line-2); background: var(--panel-2); border-radius: 8px; padding: 7px 11px; font-weight: 600; font-size: 13px; color: var(--ink); }
+.btn:hover { background: var(--panel-3); }
+.btn[aria-pressed="true"] { background: var(--accent); color: var(--accent-ink); border-color: var(--accent); }
+.btn--star[aria-pressed="true"] { background: var(--star); border-color: var(--star); color: #2a1d00; }
+.card__muted { margin: 6px 0 0; font-size: 12px; color: var(--muted); }
+.card__empty { color: var(--muted); }
+
+/* redaction bars: striped blocks that keep the shape of a line while hiding what was in it */
+.rd { display: inline-block; height: 0.95em; vertical-align: -0.12em; border-radius: 3px; background: repeating-linear-gradient(135deg, var(--rd-a) 0 3px, var(--rd-b) 3px 6px); box-shadow: inset 0 0 0 1px rgba(143, 211, 255, 0.22); user-select: none; }
+.rd--on { background: repeating-linear-gradient(135deg, #17324a 0 3px, #122638 3px 6px); box-shadow: inset 0 0 0 1px rgba(143, 211, 255, 0.4); }
+.redacted-note { display: inline-flex; align-items: center; gap: 6px; margin-top: 6px; font-size: 11px; letter-spacing: 0.06em; text-transform: uppercase; color: var(--muted); border: 1px dashed var(--line-2); border-radius: 6px; padding: 3px 8px; width: max-content; max-width: 100%; }
+.redacted-note::before { content: ""; width: 14px; height: 8px; border-radius: 2px; background: repeating-linear-gradient(135deg, var(--rd-a) 0 3px, var(--rd-b) 3px 6px); box-shadow: inset 0 0 0 1px rgba(143, 211, 255, 0.3); }
+.mono { font-family: var(--mono); font-size: 12px; }
+
+.foot { display: flex; flex-wrap: wrap; gap: 6px 18px; align-items: center; padding: 10px 14px 14px; color: var(--muted); font-size: 12px; border-top: 1px solid var(--line); }
+.foot a { color: var(--ink-2); }
+
+@media (max-width: 1120px) {
+  .stage { grid-template-columns: minmax(0, 1fr) 270px; grid-template-rows: minmax(0, 1fr) auto; grid-template-areas: "radar card" "explain explain"; }
+  .stage.is-list { grid-template-columns: minmax(0, 1fr) 270px; grid-template-rows: minmax(0, 1fr); grid-template-areas: "list card"; }
+  .explain { display: flex; flex-wrap: wrap; gap: 10px 24px; align-items: flex-start; padding: 12px 16px; }
+  .explain__text { flex: 1 1 24ch; max-width: 36ch; }
+  .explain h2 { font-size: 13px; margin-bottom: 2px; }
+  .explain p { font-size: 12px; }
+  .legend { display: flex; flex-wrap: wrap; gap: 2px 14px; align-content: flex-start; }
+  .legend li { margin: 0; }
+  .notes { display: none; }
+  .explain .fine { border: 0; padding: 0; flex-basis: 100%; }
+}
+@media (max-width: 720px) {
+  html.embedded, html.embedded body { height: auto; overflow: auto; }
+  .app, html.embedded .app { height: auto; min-height: 100vh; }
+  .stage { grid-template-columns: minmax(0, 1fr); grid-template-rows: auto; grid-template-areas: "radar" "card" "explain"; }
+  .stage.is-list { grid-template-columns: minmax(0, 1fr); grid-template-areas: "list" "card"; }
+  .radar { aspect-ratio: 840 / 640; width: 100%; padding: 0; }
+  .list { max-height: 60vh; }
+  .job select { max-width: 60vw; }
+  .search { min-width: 0; flex: 1 1 100%; }
+  #seg { flex-wrap: wrap; max-width: 100%; }
+  #seg button { flex: 1 1 auto; }
+}
+</style>
+</head>
+<body>
+<script>if (window.top !== window.self) document.documentElement.classList.add('embedded');</script>
+<div class="app">
+  <header class="top">
+    <div class="brand" aria-label="Talent Radar">
+      <svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="4.5"/><path d="M12 3v4M12 12l5.5-5.5"/><circle cx="12" cy="12" r="1.2" fill="currentColor"/></svg>
+      <span>Talent Radar</span>
+    </div>
+    <label class="job"><span class="sr">Job</span><select id="job" aria-label="Job"></select></label>
+    <button class="chip-btn" id="shortlistBtn" type="button" title="Show the shortlist">Shortlist <b id="shortlistN">0</b></button>
+    <span class="grow"></span>
+    <span class="pill pill--demo">Demo: everyone here is made up</span>
+    <button class="link" id="reset" type="button">Reset</button>
+  </header>
+  <div class="bar">
+    <div class="seg" role="group" aria-label="Status" id="seg"></div>
+    <label class="search">
+      <svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.8-3.8"/></svg>
+      <input id="q" type="search" placeholder="Search people, employers, skill areas" aria-label="Search" autocomplete="off">
+    </label>
+    <span class="grow"></span>
+    <div class="seg seg--view" role="group" aria-label="View" id="viewSeg">
+      <button type="button" data-view="list" aria-pressed="false"><svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 6h16M4 12h16M4 18h16"/></svg>List</button>
+      <button type="button" data-view="sonar" aria-pressed="true"><svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="4"/><path d="M12 3v9"/></svg>Sonar</button>
+    </div>
+  </div>
+  <main class="stage" id="stage">
+    <aside class="panel explain" id="explain">
+      <div class="explain__text">
+        <h2>Distance from the ideal candidate</h2>
+        <p>Closer to the centre means a higher match: more of the job's skill areas show in their public work.</p>
+      </div>
+      <ul class="legend" id="legend" aria-label="Match bands"></ul>
+      <ul class="notes">
+        <li><span class="ico" aria-hidden="true"></span><span>Hollow dot: not enough evidence yet, which is not a low match.</span></li>
+        <li><span class="star-ico" aria-hidden="true">★</span><span>Shortlisted</span></li>
+        <li><span>Around the circle: each person's strongest skill area.</span></li>
+      </ul>
+      <p class="fine">Click a dot. Change the job. Search. Shortlist someone.</p>
+    </aside>
+    <section class="radar" id="radar" aria-label="Sonar view">
+      <svg id="svg" viewBox="0 0 840 640" role="img" aria-label="People placed on rings by how well their public work matches the job. Switch to the list view for a readable version."></svg>
+      <div class="tip" id="tip" hidden></div>
+    </section>
+    <section class="panel list" id="list" hidden aria-label="List view"></section>
+    <aside class="panel card" id="card" aria-live="polite"></aside>
+  </main>
+  <footer class="foot">
+    <a href="/work/talent-radar.html">&larr; Back to the Talent Radar page</a>
+    <span>One screen of a private app, rebuilt for espressothecat.com. Every person, employer and signal is made up, and the signals are redacted on top.</span>
+  </footer>
+</div>
+<script>
+(() => {
+  const $ = (s, el = document) => el.querySelector(s);
+  const esc = (s) => String(s).replace(/[&<>"]/g, (ch) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[ch]));
+  const plural = (n, word) => `${n} ${word}${n === 1 ? '' : 's'}`;
+  const rd = (len, on) => `<span class="rd${on ? ' rd--on' : ''}" style="width:${(len * 0.56).toFixed(2)}em" aria-label="redacted"></span>`;
+  function mulberry32(a) { return function () { a |= 0; a = a + 0x6D2B79F5 | 0; let t = Math.imul(a ^ a >>> 15, 1 | a); t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; }; }
+
+  const CX = 420, CY = 320;
+  const RING = { close: [18, 70], good: [70, 122], partial: [122, 176], far: [176, 232], none: [276, 276] };
+  const THRESH = { close: [84, 100], good: [62, 84], partial: [40, 62], far: [0, 40] };
+  const BANDS = [['close', 'Close match'], ['good', 'Good match'], ['partial', 'Partial match'], ['far', 'Far'], ['none', 'Not enough evidence yet']];
+  const BAND_LABEL = Object.fromEntries(BANDS);
+  const STATUS = [['review', 'To review'], ['shortlisted', 'Shortlisted'], ['nofit', 'Not a fit'], ['all', 'Everyone']];
+
+  const FIRST = ['Mara', 'Tomasz', 'Priya', 'Elif', 'Jonas', 'Aiko', 'Nadia', 'Rafael', 'Ingrid', 'Kwame', 'Saoirse', 'Mateo', 'Hana', 'Dmitri', 'Leila', 'Oskar', 'Chiara', 'Ravi', 'Freya', 'Luca', 'Amara', 'Henrik', 'Sofia', 'Yusuf', 'Greta', 'Emeka', 'Noor', 'Pavel', 'Ines', 'Kenji', 'Bea', 'Arjun', 'Wren', 'Tobias', 'Zara', 'Finn', 'Maeve', 'Idris', 'Lotte', 'Caleb', 'Ayla', 'Rowan', 'Selin', 'Niall', 'Dana', 'Theo', 'Marit', 'Jamal', 'Elke', 'Ruben', 'Anouk', 'Bastian', 'Celia', 'Desmond', 'Esme', 'Farid', 'Gwen', 'Hugo', 'Imani', 'Joakim'];
+  const LAST = ['Okafor', 'Lindqvist', 'Marchetti', 'Nakamura', 'Haddad', 'Petrov', 'Sutherland', 'Byrne', 'Castellanos', 'Mensah', 'Fischer', 'Novak', 'Kowalski', 'Rahman', 'Oyelaran', 'Delacroix', 'Varga', 'Sørensen', 'Eriksen', 'Tanaka', 'Alvarez', 'Brennan', 'Kaur', 'Moreau', 'Hoffmann', 'Adeyemi', 'Larsson', 'Quinn', 'Ferreira', 'Yilmaz', 'Bakker', 'Dubois', 'Rossi', 'Nilsson', 'Osei', 'Kimura', 'Schmidt', 'Walsh', 'Ortega', 'Haugen', 'Ivanova', 'Jansen', 'Keita', 'Lombardi', 'Mahmood', 'Nwosu', 'Olsen', 'Pires', 'Reyes', 'Sato'];
+  const EMPLOYERS = ['Lattice Labs', 'Northfield Compute', 'Kestrel AI', 'Halden Systems', 'Orbital Data', 'Wintermoor', 'Parallax Research', 'Brightwater', 'Cobalt Sky', 'Meridian Robotics', 'Tessellate', 'Ashgrove', 'Independent', 'University lab', 'Fennel', 'Quillworks', 'Stratum', 'Harbourline'];
+  const ORGS = ['lattice-labs', 'kestrel-ai', 'halden', 'orbital-data', 'parallax', 'wintermoor', 'northfield', 'cobalt-sky'];
+  const PLACES = [['Zurich', 'Switzerland'], ['Berlin', 'Germany'], ['London', 'UK'], ['Bristol', 'UK'], ['Manchester', 'UK'], ['Edinburgh', 'UK'], ['Amsterdam', 'Netherlands'], ['Lisbon', 'Portugal'], ['Warsaw', 'Poland'], ['Stockholm', 'Sweden'], ['Dublin', 'Ireland'], ['Barcelona', 'Spain'], ['Munich', 'Germany'], ['Copenhagen', 'Denmark'], ['Leeds', 'UK'], ['Glasgow', 'UK'], ['Paris', 'France'], ['Vienna', 'Austria'], ['Prague', 'Czechia'], ['Helsinki', 'Finland'], ['Toronto', 'Canada'], ['Lagos', 'Nigeria'], ['Bengaluru', 'India'], ['Tokyo', 'Japan'], ['Austin', 'US'], ['Montreal', 'Canada'], ['Cambridge', 'UK'], ['Oslo', 'Norway']];
+  const JOBS = [
+    { id: 'inference', company: 'Ferrous', title: 'Inference Engineer', n: 238, seed: 11,
+      areas: ['Batching and scheduling', 'Serving engines', 'GPU kernels', 'KV cache and memory', 'Speculative decoding', 'Quantization'],
+      words: [['continuous batching', 'scheduler'], ['serving', 'throughput'], ['triton', 'cuda'], ['paged attention', 'kv cache'], ['draft model', 'acceptance rate'], ['int4', 'calibration']],
+      repos: ['batchd', 'fastserve', 'triton-blocks', 'pagedkv', 'specdec', 'quantkit'] },
+    { id: 'platform', company: 'Tidewater', title: 'Data Platform Engineer', n: 164, seed: 23,
+      areas: ['Stream processing', 'Orchestration', 'Query engines', 'Lakehouse tables', 'Data quality', 'Cost and capacity'],
+      words: [['exactly-once', 'backpressure'], ['backfills', 'retries'], ['vectorised', 'pushdown'], ['compaction', 'time travel'], ['contracts', 'anomaly checks'], ['autoscaling', 'spot']],
+      repos: ['stream-forge', 'orchestra', 'querylite', 'tablekeeper', 'qualgate', 'capacitor'] },
+    { id: 'perception', company: 'Sable Robotics', title: 'Perception Researcher', n: 97, seed: 37,
+      areas: ['3D vision', 'Sensor fusion', 'Self-supervised learning', 'Simulation', 'Edge deployment', 'Evaluation'],
+      words: [['point clouds', 'depth'], ['lidar', 'calibration'], ['contrastive', 'pretraining'], ['domain randomisation', 'sim-to-real'], ['int8', 'on-device'], ['benchmarks', 'ablations']],
+      repos: ['cloudkit', 'fusionlab', 'selfsup', 'simkit', 'edgeml', 'evalbench'] },
+  ];
+
+  function generate(job) {
+    const rnd = mulberry32(job.seed);
+    const pick = (arr) => arr[Math.floor(rnd() * arr.length)];
+    const used = new Set(); const people = [];
+    for (let i = 0; i < job.n; i++) {
+      let name; do { name = pick(FIRST) + ' ' + pick(LAST); } while (used.has(name)); used.add(name);
+      const q = Math.pow(rnd(), 2.6);
+      let ev = job.areas.map(() => rnd() < 0.4 + 0.6 * q ? 1 + Math.floor(rnd() * (1 + 3.2 * q)) : 0);
+      if (rnd() < 0.04) { const only = Math.floor(rnd() * 6); const one = rnd() < 0.5; ev = job.areas.map((_, k) => k === only && one ? 1 : 0); }
+      const total = ev.reduce((a, b) => a + b, 0);
+      const covered = ev.filter(Boolean).length;
+      const depth = ev.reduce((a, b) => a + Math.min(b, 3), 0);
+      const raw = Math.round(100 * (0.7 * depth / 18 + 0.3 * covered / 6));
+      const band = total <= 1 ? 'none' : raw >= THRESH.close[0] ? 'close' : raw >= THRESH.good[0] ? 'good' : raw >= THRESH.partial[0] ? 'partial' : 'far';
+      let k = 0; ev.forEach((v, j) => { if (v > ev[k]) k = j; });
+      if (band === 'none') k = Math.floor(rnd() * 6);
+      const [place, country] = pick(PLACES);
+      const source = rnd() < 0.68 ? 'code' : rnd() < 0.7 ? 'papers' : 'both';
+      const repo = pick(ORGS) + '/' + job.repos[k];
+      const n = Math.max(1, ev[k] + Math.floor(rnd() * 4)); const cites = 12 + Math.floor(rnd() * 140);
+      const handle = name.toLowerCase().replace(/[^a-z]/g, '').slice(0, 5 + Math.floor(rnd() * 6)) + (rnd() < 0.4 ? String(Math.floor(rnd() * 90) + 10) : '');
+      const r1 = rnd(), r2 = rnd();
+      const status0 = band === 'none' ? 'review' : (band === 'close' || band === 'good') && r1 < 0.14 ? 'shortlisted' : r2 < 0.025 ? 'nofit' : 'review';
+      let r, a;
+      if (band === 'none') { r = RING.none[0] + rnd() * 10 - 5; a = rnd() * 360; }
+      else { const [lo, hi] = THRESH[band]; const [rin, rout] = RING[band]; r = rin + (hi - raw) / (hi - lo) * (rout - rin) + rnd() * 6 - 3; a = -120 + 60 * k + rnd() * 52 - 26; }
+      const rad = a * Math.PI / 180;
+      people.push({ id: i, name, employer: pick(EMPLOYERS), place, country, ev, total, covered, score: band === 'none' ? null : raw, band, k, source, repo, n, cites, handle, status: status0, status0,
+        x: +(CX + r * Math.cos(rad)).toFixed(1), y: +(CY + r * Math.sin(rad)).toFixed(1) });
+    }
+    return people;
+  }
+
+  const state = { job: JOBS[0], status: 'all', q: '', view: 'sonar', selected: null, pops: {}, hl: null };
+  const pop = () => (state.pops[state.job.id] ||= generate(state.job));
+  const matches = (c) => {
+    if (state.status !== 'all' && c.status !== state.status) return false;
+    if (!state.q) return true;
+    const hay = (c.name + ' ' + c.employer + ' ' + c.place + ' ' + c.country + ' ' + state.job.areas[c.k] + ' ' + BAND_LABEL[c.band]).toLowerCase();
+    return state.q.split(/\s+/).every((w) => hay.includes(w));
+  };
+  const visible = () => pop().filter(matches);
+  const byScore = (a, b) => (b.score ?? -1) - (a.score ?? -1) || a.name.localeCompare(b.name);
+  const topOf = (list) => list.filter((c) => c.score != null).sort(byScore)[0] || null;
+
+  // ----- static radar background, built once per job -----
+  const bgCache = {};
+  function wrapLabel(s) {
+    if (s.length <= 14) return [s];
+    const words = s.split(' '); let best = null;
+    for (let i = 1; i < words.length; i++) { const a = words.slice(0, i).join(' '), b = words.slice(i).join(' '); const d = Math.abs(a.length - b.length); if (!best || d < best.d) best = { a, b, d }; }
+    return [best.a, best.b];
+  }
+  function background(job) {
+    if (bgCache[job.id]) return bgCache[job.id];
+    let s = `<defs><radialGradient id="g"><stop offset="0" stop-color="#2f8f5f" stop-opacity=".62"/><stop offset=".55" stop-color="#2f8f5f" stop-opacity=".22"/><stop offset="1" stop-color="#2f8f5f" stop-opacity="0"/></radialGradient></defs>`;
+    s += `<circle cx="${CX}" cy="${CY}" r="${RING.none[0]}" fill="rgba(255,255,255,0.025)"/>`;
+    s += `<circle cx="${CX}" cy="${CY}" r="${RING.good[1]}" fill="url(#g)"/>`;
+    for (let i = 0; i < 6; i++) { const a = (-150 + 60 * i) * Math.PI / 180; s += `<line x1="${(CX + RING.close[0] * Math.cos(a)).toFixed(1)}" y1="${(CY + RING.close[0] * Math.sin(a)).toFixed(1)}" x2="${(CX + RING.none[0] * Math.cos(a)).toFixed(1)}" y2="${(CY + RING.none[0] * Math.sin(a)).toFixed(1)}" stroke="rgba(255,255,255,0.07)" stroke-width="1"/>`; }
+    for (const b of ['close', 'good', 'partial', 'far']) s += `<circle cx="${CX}" cy="${CY}" r="${RING[b][1]}" fill="none" stroke="rgba(255,255,255,0.14)" stroke-width="1"/>`;
+    s += `<circle cx="${CX}" cy="${CY}" r="${RING.none[0]}" fill="none" stroke="rgba(255,255,255,0.22)" stroke-width="1" stroke-dasharray="3 5"/>`;
+    s += `<circle cx="${CX}" cy="${CY}" r="7" fill="none" stroke="#e7eef6" stroke-width="1.5"/><circle cx="${CX}" cy="${CY}" r="2.4" fill="#e7eef6"/><text class="ideal-label" x="${CX}" y="${CY + 24}" text-anchor="middle">Ideal</text>`;
+    job.areas.forEach((area, k) => {
+      const a = (-120 + 60 * k) * Math.PI / 180; const R = 302;
+      const x = CX + R * Math.cos(a), y = CY + R * Math.sin(a);
+      const anchor = k === 2 ? 'start' : k === 5 ? 'end' : 'middle';
+      const lines = wrapLabel(area);
+      const y0 = (k === 2 || k === 5) ? y - (lines.length - 1) * 7 + 4 : (k < 2 ? y - (lines.length - 1) * 14 : y + 10);
+      s += `<text class="area-label" x="${x.toFixed(1)}" y="${y0.toFixed(1)}" text-anchor="${anchor}">` + lines.map((l, i) => `<tspan x="${x.toFixed(1)}" dy="${i ? 14 : 0}">${esc(l)}</tspan>`).join('') + `</text>`;
+    });
+    return (bgCache[job.id] = s);
+  }
+  // ring names sit above the dots so they stay readable
+  let ringLabelsCache = '';
+  function ringLabels() {
+    if (ringLabelsCache) return ringLabelsCache;
+    let s = '';
+    for (const [b, label] of [['close', 'Close match'], ['good', 'Good match'], ['partial', 'Partial match'], ['far', 'Far'], ['none', 'Not enough evidence yet']]) {
+      const r = b === 'none' ? RING.none[0] : RING[b][1]; const w = label.length * 6.4 + 16;
+      s += `<rect class="ring-pill" x="${(CX - w / 2).toFixed(1)}" y="${CY - r - 9}" width="${w.toFixed(1)}" height="18" rx="9"/><text class="ring-label" x="${CX}" y="${CY - r + 4}" text-anchor="middle">${esc(label)}</text>`;
+    }
+    return (ringLabelsCache = s);
+  }
+  function starPoints(cx, cy, R = 6.8, r = 2.9) {
+    const p = []; for (let i = 0; i < 10; i++) { const a = -Math.PI / 2 + i * Math.PI / 5; const rr = i % 2 ? r : R; p.push((cx + rr * Math.cos(a)).toFixed(1) + ',' + (cy + rr * Math.sin(a)).toFixed(1)); }
+    return p.join(' ');
+  }
+
+  // ----- rendering -----
+  const svg = $('#svg'), tip = $('#tip'), radar = $('#radar'), listEl = $('#list'), card = $('#card'), stage = $('#stage');
+  function renderSvg() {
+    const vis = visible(); const sel = state.selected;
+    let dots = '';
+    for (const c of vis) {
+      const dim = state.hl && c.band !== state.hl ? ' is-dim' : '';
+      const sl = sel && sel.id === c.id;
+      if (c.status === 'shortlisted') dots += `<polygon class="dot dot--star${dim}" data-id="${c.id}" points="${starPoints(c.x, c.y)}"><title>${esc(c.name)}</title></polygon>`;
+      else if (c.band === 'none') dots += `<circle class="dot dot--hollow${dim}" data-id="${c.id}" cx="${c.x}" cy="${c.y}" r="4.2"><title>${esc(c.name)}</title></circle>`;
+      else dots += `<circle class="dot dot--fill${dim}" data-id="${c.id}" cx="${c.x}" cy="${c.y}" r="${sl ? 0 : 4.6}"><title>${esc(c.name)}</title></circle>`;
+    }
+    let selm = '';
+    if (sel && vis.includes(sel)) {
+      const label = sel.score == null ? sel.name : `${sel.name} ${sel.score}%`;
+      const w = label.length * 7 + 18; const right = sel.x + 16 + w < 840; const px = right ? sel.x + 16 : sel.x - 16 - w;
+      const parts = sel.score == null ? esc(sel.name) : `${esc(sel.name)} <tspan class="pct">${sel.score}%</tspan>`;
+      selm = `<circle class="sel-halo" cx="${sel.x}" cy="${sel.y}" r="11"/><circle class="sel-core" cx="${sel.x}" cy="${sel.y}" r="4.6"/>` +
+        `<rect class="sel-pill" x="${px.toFixed(1)}" y="${(sel.y - 11).toFixed(1)}" width="${w.toFixed(1)}" height="22" rx="11"/><text class="sel-text" x="${(px + 9).toFixed(1)}" y="${(sel.y + 4.2).toFixed(1)}">${parts}</text>`;
+    }
+    svg.innerHTML = background(state.job) + `<g class="dots">${dots}</g><g class="rings">${ringLabels()}</g><g class="sel">${selm}</g>`;
+    svg.setAttribute('aria-label', `${vis.length} people placed on rings by how well their public work matches the ${state.job.title} job. Switch to the list view for a readable version.`);
+  }
+  function renderLegend() {
+    const vis = visible(); const counts = {}; vis.forEach((c) => (counts[c.band] = (counts[c.band] || 0) + 1));
+    $('#legend').innerHTML = BANDS.map(([b, label]) => `<li data-band="${b}"><span class="swatch sw-${b}" aria-hidden="true"></span><span>${label}</span><span class="n">${counts[b] || 0}</span></li>`).join('');
+  }
+  function renderBar() {
+    const all = pop(); const counts = { all: all.length }; all.forEach((c) => (counts[c.status] = (counts[c.status] || 0) + 1));
+    $('#seg').innerHTML = STATUS.map(([s, label]) => `<button type="button" data-status="${s}" aria-pressed="${state.status === s}">${label}<b>${counts[s] || 0}</b></button>`).join('');
+    $('#shortlistN').textContent = counts.shortlisted || 0;
+    $('#viewSeg').querySelectorAll('button').forEach((b) => b.setAttribute('aria-pressed', String(b.dataset.view === state.view)));
+  }
+  function renderList() {
+    const vis = visible().slice().sort(byScore); const sel = state.selected;
+    if (!vis.length) { listEl.innerHTML = '<p class="empty">No one matches this filter.</p>'; return; }
+    const rows = vis.map((c) => `<tr data-id="${c.id}" tabindex="0" class="${sel && sel.id === c.id ? 'is-sel' : ''}">` +
+      `<td><div class="name">${c.status === 'shortlisted' ? '<span class="star" aria-label="Shortlisted">★</span>' : ''}${esc(c.name)}</div><div class="sub">${esc(c.employer)} · ${esc(c.place)}</div></td>` +
+      `<td class="pct ${c.score == null ? 'none' : ''}">${c.score == null ? '—' : c.score + '%'}</td>` +
+      `<td><span class="band band--${c.band}">${BAND_LABEL[c.band]}</span></td>` +
+      `<td>${esc(state.job.areas[c.k])}</td>` +
+      `<td class="mono">${signalShort(c)}</td></tr>`).join('');
+    listEl.innerHTML = `<table><thead><tr><th>Person</th><th>Match</th><th>Band</th><th>Strongest area</th><th>Signal</th></tr></thead><tbody>${rows}</tbody></table>`;
+  }
+  // where a signal came from is never named: the kind of source and its name are both redacted
+  const sourceCount = (c) => c.source === 'both' ? 3 : c.source === 'papers' ? 1 : 2;
+  function signalShort(c) {
+    if (c.band === 'none') return `1 signal ${rd(9)}`;
+    return `${plural(c.n, 'signal')} ${rd(c.repo.length)}`;
+  }
+  function evidence(c, job) {
+    const area = job.areas[c.k]; const words = job.words[c.k];
+    if (c.band === 'none') {
+      if (c.total === 0) return `A profile and little else. ${rd(14)} Not enough to place them.`;
+      return `One public signal so far, from ${rd(9, true)}: ${rd(c.repo.length, true)}. Not enough to place them.`;
+    }
+    if (c.source === 'papers') return `${plural(c.n, 'signal')} on ${esc(area)} from ${rd(8, true)}, the strongest ${rd(24, true)}, cited ${c.cites} times.`;
+    if (c.source === 'both') return `${plural(c.n, 'signal')} across two sources, ${rd(8, true)} and ${rd(10, true)}, ${c.n === 1 ? 'uses' : 'use'} this job's words: ${rd(words[0].length, true)}, ${esc(words[1])}.`;
+    return `${plural(c.n, 'signal')} from ${rd(9, true)}, the strongest in ${rd(c.repo.length, true)}, ${c.n === 1 ? 'uses' : 'use'} this job's words: ${rd(words[0].length, true)}, ${esc(words[1])}.`;
+  }
+  function renderCard() {
+    const vis = visible(); const job = state.job;
+    let c = state.selected && vis.includes(state.selected) ? state.selected : null; const isSel = !!c;
+    if (!c) c = topOf(vis);
+    if (!c) { card.innerHTML = `<p class="card__eyebrow">Closest to the ideal candidate</p><p class="card__empty">No one matches this filter yet.</p>`; return; }
+    const missing = job.areas.filter((_, j) => !c.ev[j]);
+    const fit = c.band === 'none' ? 'Not placed yet. Shortlist them anyway if the name rings a bell, and the tool keeps looking.' : c.covered === 6 ? 'Covers all six skill areas.' : `Covers ${c.covered} of 6 skill areas. Missing: ${missing.map(esc).join(', ')}.`;
+    card.innerHTML =
+      `<p class="card__eyebrow"><span>${isSel ? 'Selected' : 'Closest to the ideal candidate'}</span>${isSel ? '<button class="link" type="button" data-act="clear">Back to closest</button>' : ''}</p>` +
+      `<h2>${esc(c.name)}</h2><p class="card__sub">${esc(c.employer)} · ${esc(c.place)}, ${esc(c.country)}</p>` +
+      (c.score == null ? `<p class="card__match"><b>—</b> no match yet</p>` : `<p class="card__match"><b>${c.score}%</b> match</p>`) +
+      `<div><span class="band band--${c.band}">${BAND_LABEL[c.band]}</span></div>` +
+      (c.band === 'none' ? '' : `<p class="card__k">Strongest skill area</p><p class="card__v">${esc(job.areas[c.k])}</p>`) +
+      `<p class="card__k">Why</p><p class="card__ev">${evidence(c, job)}</p>` +
+      `<p class="card__k">Sources</p><p class="card__ev mono">${Array.from({ length: sourceCount(c) }, (_, i) => rd([11, 7, 9][i] + (c.handle.length % 3), true)).join(' · ')}</p>` +
+      `<span class="redacted-note">Redacted</span>` +
+      `<p class="card__k">Evidence by skill area</p><ul class="bars">` + job.areas.map((a, j) => `<li class="${j === c.k && c.band !== 'none' ? 'is-top' : ''}"><span>${esc(a)}</span><i style="--v:${c.ev[j]}" aria-label="${c.ev[j]} of 5"></i></li>`).join('') + `</ul>` +
+      `<p class="card__fit">${fit}</p>` +
+      `<div class="card__actions"><button class="btn btn--star" type="button" data-act="shortlist" aria-pressed="${c.status === 'shortlisted'}">${c.status === 'shortlisted' ? '★ Shortlisted' : '☆ Shortlist'}</button><button class="btn" type="button" data-act="nofit" aria-pressed="${c.status === 'nofit'}">${c.status === 'nofit' ? 'Marked not a fit' : 'Not a fit'}</button></div>`;
+    card.dataset.id = c.id;
+  }
+  function renderAll() {
+    stage.classList.toggle('is-list', state.view === 'list');
+    listEl.hidden = state.view !== 'list'; radar.hidden = state.view === 'list';
+    renderBar(); renderLegend();
+    if (state.view === 'list') renderList(); else renderSvg();
+    renderCard();
+  }
+
+  // ----- wiring -----
+  const jobSel = $('#job');
+  jobSel.innerHTML = JOBS.map((j) => `<option value="${j.id}">${esc(j.company)} · ${esc(j.title)}</option>`).join('');
+  jobSel.addEventListener('change', () => { state.job = JOBS.find((j) => j.id === jobSel.value); state.selected = null; state.hl = null; renderAll(); });
+  $('#seg').addEventListener('click', (e) => { const b = e.target.closest('[data-status]'); if (!b) return; state.status = b.dataset.status; renderAll(); });
+  $('#viewSeg').addEventListener('click', (e) => { const b = e.target.closest('[data-view]'); if (!b) return; state.view = b.dataset.view; renderAll(); });
+  $('#shortlistBtn').addEventListener('click', () => { state.status = 'shortlisted'; renderAll(); });
+  $('#q').addEventListener('input', (e) => { state.q = e.target.value.trim().toLowerCase(); renderAll(); });
+  $('#reset').addEventListener('click', () => { pop().forEach((c) => (c.status = c.status0)); state.status = 'all'; state.q = ''; $('#q').value = ''; state.selected = null; state.hl = null; renderAll(); });
+  $('#legend').addEventListener('mouseover', (e) => { const li = e.target.closest('[data-band]'); if (!li || state.hl === li.dataset.band) return; state.hl = li.dataset.band; renderSvg(); });
+  $('#legend').addEventListener('mouseleave', () => { if (!state.hl) return; state.hl = null; renderSvg(); });
+  svg.addEventListener('click', (e) => { const t = e.target.closest('[data-id]'); if (!t) return; const c = pop()[+t.dataset.id]; state.selected = state.selected === c ? null : c; renderSvg(); renderCard(); });
+  svg.addEventListener('mousemove', (e) => {
+    const t = e.target.closest('[data-id]'); if (!t) { tip.hidden = true; return; }
+    const c = pop()[+t.dataset.id]; const box = radar.getBoundingClientRect();
+    tip.innerHTML = `${esc(c.name)} ${c.score == null ? '<small>not enough evidence</small>' : `<b>${c.score}%</b>`}<br><small>${esc(c.employer)} · ${esc(state.job.areas[c.k])}</small>`;
+    tip.hidden = false;
+    const x = Math.min(e.clientX - box.left + 14, box.width - tip.offsetWidth - 8), y = Math.min(e.clientY - box.top + 14, box.height - tip.offsetHeight - 8);
+    tip.style.left = Math.max(0, x) + 'px'; tip.style.top = Math.max(0, y) + 'px';
+  });
+  svg.addEventListener('mouseleave', () => (tip.hidden = true));
+  const selectRow = (tr) => { state.selected = pop()[+tr.dataset.id]; renderList(); renderCard(); };
+  listEl.addEventListener('click', (e) => { const tr = e.target.closest('tr[data-id]'); if (tr) selectRow(tr); });
+  listEl.addEventListener('keydown', (e) => { if (e.key !== 'Enter' && e.key !== ' ') return; const tr = e.target.closest('tr[data-id]'); if (!tr) return; e.preventDefault(); selectRow(tr); });
+  card.addEventListener('click', (e) => {
+    const b = e.target.closest('[data-act]'); if (!b) return; const c = pop()[+card.dataset.id];
+    if (b.dataset.act === 'clear') state.selected = null;
+    else if (b.dataset.act === 'shortlist') c.status = c.status === 'shortlisted' ? 'review' : 'shortlisted';
+    else if (b.dataset.act === 'nofit') c.status = c.status === 'nofit' ? 'review' : 'nofit';
+    if (b.dataset.act !== 'clear') state.selected = c;
+    renderAll();
+  });
+  renderAll();
+})();
+</script>
+<script>if (window.top === window.self) { const s = document.createElement('script'); s.async = true; s.dataset.goatcounter = 'https://espressothecat.goatcounter.com/count'; s.src = '//gc.zgo.at/count.js'; document.body.appendChild(s); }</script>
+</body>
+</html>

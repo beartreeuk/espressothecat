@@ -1,0 +1,74 @@
+<!doctype html>
+<html lang="en-GB">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Local models for Claude · Espresso the cat</title>
+<meta name="description" content="Two small servers that let Claude Code use a model on my own graphics card.">
+<meta name="theme-color" content="#1a1611">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Local models for Claude · Espresso the cat">
+<meta property="og:description" content="Two small servers that let Claude Code use a model on my own graphics card.">
+<meta property="og:image" content="https://espressothecat.com/assets/clifford-still.jpg">
+<meta property="og:url" content="https://espressothecat.com/work/ollama-mcp.html">
+<link rel="canonical" href="https://espressothecat.com/work/ollama-mcp.html">
+<link rel="icon" href="/assets/favicon.svg" type="image/svg+xml">
+<link rel="stylesheet" href="/style.css">
+<script>document.documentElement.classList.add('js');</script>
+</head>
+<body class="case">
+<a class="skip" href="#main">Skip to the content</a>
+<header class="nav">
+  <div class="container">
+    <a class="wordmark" href="/" aria-label="Espresso the cat, home">espresso the cat</a>
+    <ul>
+      <li><a href="/#work" class="is-current">Work</a></li>
+      <li><a href="/#how">How I work</a></li>
+      <li><a href="/#espresso">Espresso</a></li>
+      <li><a href="/#hire">Hire me</a></li>
+    </ul>
+  </div>
+</header>
+
+<main id="main" class="container">
+  <header class="case-head">
+    <div>
+      <p class="eyebrow"><a href="/#work">Work</a> <span aria-hidden="true">&middot;</span> 6 of 7</p>
+      <h1>Local models for Claude</h1>
+      <p class="lead">Two small servers that let Claude Code use a model on my own graphics card.</p>
+    </div>
+    <dl class="case-meta">
+      <div><dt>Status</dt><dd><span class="chip">Running daily</span></dd></div>
+      <div><dt>Stack</dt><dd class="stack">Node, MCP, Ollama, Gemma</dd></div>
+    </dl>
+  </header>
+  
+  <div class="case-body">
+<section class="case-section" aria-labelledby="s0"><h2 id="s0">About</h2><div class="case-section__body"><p>Claude Code has a context limit and a paid plan. Logs, data dumps and long documents eat both. This gives Claude three tools: <code>ask</code> (a question to a local model), <code>list_models</code>, and <code>digest</code> (hand a set of files to a local model with one question and get back only the answer, with file and line references). The files never enter Claude’s context, so private data stays on the machine and the paid context stays small.</p><p>A second copy of the server lets another machine use my graphics card over a private network.</p></div></section>
+<section class="case-section" aria-labelledby="s1"><h2 id="s1">What I did</h2><div class="case-section__body"><ul><li>Specified the three tools and had Claude Code build the servers in Node with the MCP SDK.</li><li>Wired <code>digest</code> into my harness, so any session can read a 12 MB log in one call.</li><li>Tuned the prompt so answers cite file and line, which makes them checkable.</li></ul><figure class="term"><pre class="term__screen"><code><span class="line line--in">&gt; what broke in last night’s render run?</span>
+<span class="line">digest  logs/run-*.log  (3 files, 12 MB)  “which jobs failed, and why?”</span>
+<span class="line">  gemma on the GPU, 41 s</span>
+<span class="line">  3 jobs timed out after 02:14, all three-body renders over 4,000 frames.</span>
+<span class="line">  Nothing else failed.</span>
+<span class="line line--ok">Three lines in Claude’s context, not twelve megabytes.</span></code></pre><figcaption>A digest call. The shape is real; the log is a sample.</figcaption></figure></div></section>
+<section class="case-section" aria-labelledby="s2"><h2 id="s2">Stack</h2><div class="case-section__body"><ul><li>Node and the MCP SDK</li><li>Ollama running Gemma on an RTX 5070 Ti</li><li>zod for argument validation</li></ul></div></section>
+<section class="case-section" aria-labelledby="s3"><h2 id="s3">Skills</h2><div class="case-section__body"><ul><li>Knowing which work belongs on a cheap local model</li><li>Keeping private data off cloud services</li><li>Small, finished tools rather than platforms</li></ul></div></section>
+  </div>
+  
+  <nav class="case-foot" aria-label="More work"><a class="btn btn--quiet" href="/#work">Back to the work</a><a class="btn btn--primary" href="/work/fractal-mcp.html">Next: Fractal MCP</a></nav>
+</main>
+
+<footer class="footer footer--slim">
+  <div class="container">
+    <p class="footer__mast">espresso the cat</p>
+    <div class="footer__links">
+      <a href="https://github.com/beartreeuk">GitHub</a>
+      <a href="mailto:hello@espressothecat.com">hello@espressothecat.com</a>
+      <a href="/work/this-site.html">How this site was made</a>
+      <small>Every screenshot and demo uses made-up data or public game data.</small>
+    </div>
+  </div>
+</footer>
+<script data-goatcounter="https://espressothecat.goatcounter.com/count" async src="//gc.zgo.at/count.js"></script>
+</body>
+</html>
