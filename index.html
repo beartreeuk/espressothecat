@@ -16,128 +16,129 @@
 <body>
 <a class="skip" href="#work">Skip to the work</a>
 
+<figure class="ground" data-loop aria-hidden="true">
+  <img src="assets/clifford-still.jpg" width="2560" height="1440" alt="" fetchpriority="high">
+  <canvas id="silk"></canvas>
+</figure>
+
 <header class="nav">
   <div class="container">
     <a class="wordmark" href="/" aria-label="Espresso the cat, home">espresso the cat</a>
     <ul>
       <li><a href="/#work">Work</a></li>
       <li><a href="/#how">How I work</a></li>
-      <li><a href="/#espresso">Espresso</a></li>
       <li><a href="/#hire">Hire me</a></li>
     </ul>
   </div>
 </header>
 
 <main>
-  <section class="hero" aria-labelledby="hero-title">
-    <figure class="hero__art" data-loop>
-      <img src="assets/clifford-still.jpg" width="2560" height="1440" alt="" fetchpriority="high">
-      <canvas id="silk" aria-label="A Clifford attractor, drifting. Move the pointer to bend it, click for a new shape." role="img"></canvas>
-    </figure>
-    <div class="hero__body container">
+  <section class="hero container" aria-labelledby="hero-title">
+    <dl class="hero__facts">
+      <div><dt>Status</dt><dd>Available now</dd></div>
+      <div><dt>Where</dt><dd>Remote, UK</dd></div>
+      <div><dt>Looking for</dt><dd>Product, operations or AI tooling</dd></div>
+    </dl>
+    <div class="hero__body">
       <h1 id="hero-title">I build the tools a team is missing.</h1>
       <p class="lead">Mostly by directing Claude Code and testing what it makes. At my last job, operations at a UK vehicle-leasing broker, four things I built were still in daily use when I left.</p>
-      <p class="hero__status">Looking for a remote UK role in product, operations or AI tooling. Available now.</p>
-      <div class="hero__actions">
-        <a class="btn btn--primary" href="#work">See the work</a>
-        <a class="btn btn--quiet" href="mailto:hello@espressothecat.com">Email me</a>
-        <button class="btn btn--quiet" type="button" data-loop-toggle aria-controls="silk">Pause</button>
+      <div class="hero__links">
+        <a class="arrow" href="#work">See the work <span aria-hidden="true">&darr;</span></a>
+        <a class="arrow" href="mailto:hello@espressothecat.com">Email me <span aria-hidden="true">&rarr;</span></a>
       </div>
-      <p class="hero__hint" data-hint>A Clifford attractor, drawn live on your graphics card. Move to bend it, click for another.</p>
+    </div>
+    <div class="hero__foot">
+      <p>A Clifford attractor, drawn live on your graphics card. Move to bend it. Click for another.</p>
+      <button type="button" data-loop-toggle aria-controls="silk">Pause</button>
     </div>
   </section>
 
-  <section class="section work" id="work" aria-labelledby="work-title">
+  <section class="section" id="work" aria-labelledby="work-title">
     <div class="container">
-      <div class="head head--split">
+      <div class="section__head">
         <h2 id="work-title">Work</h2>
-        <p class="lead">Seven projects. Each opens a page with what I did, the stack and the skills.</p>
+        <p>Seven projects. Each opens a page with what I did, the stack and the skills.</p>
       </div>
-      <div class="bento" data-reveal>
-        <a class="tile tile--lead tile--split" href="work/talent-radar.html">
-          <img src="assets/talent-radar-sonar.jpg" width="1440" height="900" loading="lazy" alt="">
-          <div class="tile__text">
-            <h3>Talent Radar</h3>
-            <p>A sourcing tool for a recruiter friend. It finds engineers from their public work and says, in plain English, why they fit the job. Built with a partner; I own the product side, the screens and the privacy paperwork. The Sonar view above is a working demo on its page.</p>
-            <p class="stack"><span class="chip">Private</span> React, Go, Postgres</p>
-          </div>
-        </a>
-        <a class="tile tile--tall tile--split" href="work/back-office.html">
-          <img class="tile__art--contain" src="assets/back-office-tools-phone.svg" width="700" height="680" loading="lazy" alt="">
-          <div class="tile__text">
-            <h3>Back-office tools</h3>
-            <p>Four internal tools for a UK vehicle-leasing broker, built on the job: cancellations, invoicing into the accounts software, marketing uploads, and an order integration that carried 215 orders. All still in use when I left.</p>
-            <p class="stack"><span class="chip">In use</span> Claude Code, internal tools</p>
-          </div>
-        </a>
-        <a class="tile tile--half tile--split" href="work/harness.html">
-          <img src="assets/harness-overview.jpg" width="1440" height="900" loading="lazy" alt="">
-          <div class="tile__text">
-            <h3>A harness for Claude Code</h3>
-            <p>Everything I wired around Claude Code so it works like a colleague: it briefs each session on the project, blocks dangerous commands, reviews every commit for bugs, writes up the day, and takes instructions by voice.</p>
-            <p class="stack"><span class="chip">Daily use</span> Node, SQLite, Ollama</p>
-          </div>
-        </a>
-        <a class="tile tile--half tile--split" href="work/metalol.html">
-          <img src="assets/metalol-tier-list.jpg" width="1440" height="900" loading="lazy" alt="">
-          <div class="tile__text">
-            <h3>MetaLoL</h3>
-            <p>A new front end for a public League of Legends stats site, sister of MetaTFT. Tier list, champion pages, a phone layout and tests. Waiting for the owner’s review.</p>
-            <p class="stack"><span class="chip">On a branch</span> React 19, TypeScript, Vite</p>
-          </div>
-        </a>
-        <a class="tile tile--half grained" href="work/needle-drop.html">
-          
-          <div class="tile__text">
-            <h3>Needle Drop</h3>
-            <p>A keyboard DJ rhythm game with roguelike runs: left hand mixes, right hand beatmatches, every record switch scores like a card game. Design written, first slice being built.</p>
-            <p class="stack"><span class="chip">In progress</span> Godot 4.7, GDScript</p>
-          </div>
-        </a>
-        <a class="tile tile--half grained" href="work/ollama-mcp.html">
-          
-          <div class="tile__text">
-            <h3>Local models for Claude</h3>
-            <p>Two small servers that hand long files to a model on my own graphics card and send back only the answer. Private data stays on the machine and Claude’s context stays small.</p>
-            <p class="stack"><span class="chip">Running</span> Node, MCP, Ollama</p>
-          </div>
-        </a>
-        <a class="tile tile--half tile--photo" href="work/fractal-mcp.html">
-          <img src="assets/three-body.jpg" width="1440" height="900" loading="lazy" alt="">
-          <div class="tile__text">
-            <h3>Fractal MCP</h3>
-            <p>A render farm for maths art that Claude can call like a tool: ask for a fractal in a sentence, get the picture back from my graphics card. Every render on this page came out of it.</p>
-            <p class="stack"><span class="chip">Running</span> Node, Python, OpenCL</p>
-          </div>
-        </a>
-      </div>
+      <ol class="index" data-reveal>
+        <li class="row">
+          <a href="work/talent-radar.html">
+            <span class="row__n">01</span>
+            <span class="row__main"><h3 class="row__title">Talent Radar</h3><span class="row__blurb">Finds engineers from their public work and says, in plain English, why they fit the job. Built with a partner; I own the product side, the screens and the privacy paperwork.</span></span>
+            <span class="row__meta"><span class="row__status">Private</span><span class="row__stack">React, Go, Postgres</span></span>
+            <span class="row__go" aria-hidden="true">&rarr;</span>
+          </a>
+          <figure class="demo">
+            <div class="demo__frame"><iframe src="work/demo/talent-radar.html" title="Talent Radar: the Sonar view, a working demo" loading="lazy"></iframe></div>
+            <a class="demo__fallback" href="work/demo/talent-radar.html">
+              <img src="assets/talent-radar-sonar.jpg" width="1600" height="900" loading="lazy" alt="The Sonar view: candidates as dots on rings around an ideal in the middle, one selected, with a match card beside it">
+              <span class="btn btn--primary">Open the demo</span>
+            </a>
+            <figcaption><span>Live. Click a dot, change the job, search, shortlist someone.</span><a href="work/talent-radar.html">About the project</a></figcaption>
+          </figure>
+        </li>
+        <li class="row" data-img="assets/back-office-tools.svg">
+          <a href="work/back-office.html">
+            <span class="row__n">02</span>
+            <span class="row__main"><h3 class="row__title">Back-office tools</h3><span class="row__blurb">Four internal tools for a UK vehicle-leasing broker, built on the job: cancellations, invoicing, marketing uploads and an order integration that carried 215 orders. All still in use when I left.</span></span>
+            <span class="row__meta"><span class="row__status">In use</span><span class="row__stack">Claude Code, internal tools</span></span>
+            <span class="row__go" aria-hidden="true">&rarr;</span>
+          </a>
+        </li>
+        <li class="row" data-img="assets/harness-overview.jpg">
+          <a href="work/harness.html">
+            <span class="row__n">03</span>
+            <span class="row__main"><h3 class="row__title">A harness for Claude Code</h3><span class="row__blurb">Everything I wired around Claude Code so it works like a colleague: briefs each session, blocks dangerous commands, reviews every commit, writes up the day, takes instructions by voice.</span></span>
+            <span class="row__meta"><span class="row__status">Daily use</span><span class="row__stack">Node, SQLite, Ollama</span></span>
+            <span class="row__go" aria-hidden="true">&rarr;</span>
+          </a>
+        </li>
+        <li class="row" data-img="assets/metalol-tier-list.jpg">
+          <a href="work/metalol.html">
+            <span class="row__n">04</span>
+            <span class="row__main"><h3 class="row__title">MetaLoL</h3><span class="row__blurb">A new front end for a public League of Legends stats site, sister of MetaTFT. Tier list, champion pages, a phone layout and tests.</span></span>
+            <span class="row__meta"><span class="row__status">On a branch</span><span class="row__stack">React 19, TypeScript, Vite</span></span>
+            <span class="row__go" aria-hidden="true">&rarr;</span>
+          </a>
+        </li>
+        <li class="row">
+          <a href="work/needle-drop.html">
+            <span class="row__n">05</span>
+            <span class="row__main"><h3 class="row__title">Needle Drop</h3><span class="row__blurb">A keyboard DJ rhythm game with roguelike runs: left hand mixes, right hand beatmatches, every record switch scores like a card game.</span></span>
+            <span class="row__meta"><span class="row__status">In progress</span><span class="row__stack">Godot 4.7, GDScript</span></span>
+            <span class="row__go" aria-hidden="true">&rarr;</span>
+          </a>
+        </li>
+        <li class="row">
+          <a href="work/ollama-mcp.html">
+            <span class="row__n">06</span>
+            <span class="row__main"><h3 class="row__title">Local models for Claude</h3><span class="row__blurb">Two small servers that hand long files to a model on my own graphics card and send back only the answer. Private data stays on the machine.</span></span>
+            <span class="row__meta"><span class="row__status">Running</span><span class="row__stack">Node, MCP, Ollama</span></span>
+            <span class="row__go" aria-hidden="true">&rarr;</span>
+          </a>
+        </li>
+        <li class="row" data-img="assets/three-body.jpg">
+          <a href="work/fractal-mcp.html">
+            <span class="row__n">07</span>
+            <span class="row__main"><h3 class="row__title">Fractal MCP</h3><span class="row__blurb">A render farm for maths art that Claude can call like a tool: ask for a fractal in a sentence, get the picture back from my graphics card.</span></span>
+            <span class="row__meta"><span class="row__status">Running</span><span class="row__stack">Node, Python, OpenCL</span></span>
+            <span class="row__go" aria-hidden="true">&rarr;</span>
+          </a>
+        </li>
+      </ol>
     </div>
   </section>
 
-  <section class="section lately" aria-labelledby="lately-title">
+  <section class="section" id="how" aria-labelledby="how-title">
     <div class="container">
-      <div class="head head--split">
-        <h2 id="lately-title">Lately</h2>
-      </div>
-      <dl class="timeline" data-reveal>
-        <div><dt>Oct 2026 to now</dt><dd><strong>Talent Radar</strong>, with a partner, for a recruiter. Product, screens, the UK GDPR paperwork.</dd></div>
-        <div><dt>Dec 2025 to Oct 2026</dt><dd><strong>Operations, UK vehicle-leasing broker.</strong> The internal ticket queue, order admin for nine salespeople, hands-on IT, and from August the front end of the new company website. Built the four tools above on the side.</dd></div>
-        <div><dt>2025 to now</dt><dd><strong>MetaLoL</strong>, contributor. Small fixes on the live site, then a front-end remake on a branch.</dd></div>
-      </dl>
-    </div>
-  </section>
-
-  <section class="section how" id="how" aria-labelledby="how-title">
-    <div class="container">
-      <div class="head head--split">
+      <div class="section__head">
         <h2 id="how-title">How I work with AI</h2>
       </div>
       <div class="how__grid">
-        <div class="how__text">
-          <p>I write the brief in plain words. Claude Code reads the code and proposes a plan, I say go, and I read and run every change before it lands.</p>
-          <p>Around that sits <a href="work/harness.html">a harness I built</a>: guards so the AI cannot read secrets or throw work away, a bot that reviews every commit, and write-ups so nothing is lost between days. Long files and private data go to a model on my own graphics card, not to the cloud.</p>
-          <p>The tools are new. The habits are old ones: write it down, test it against the real thing, keep it small enough to finish.</p>
-        </div>
+        <ol class="creed" data-reveal>
+          <li><p>I write the brief in plain words. Claude Code reads the code and proposes a plan, I say go, and I read and run every change before it lands.</p></li>
+          <li><p>Around that sits <a href="work/harness.html">a harness I built</a>: guards so the AI cannot read secrets or throw work away, a reviewer on every commit, and write-ups so nothing is lost between days.</p></li>
+          <li><p>Long files and private data go to a model on my own graphics card, not to the cloud. The tools are new; the habits are old ones: write it down, test it against the real thing, keep it small enough to finish.</p></li>
+        </ol>
         <figure class="term"><pre class="term__screen"><code><span class="line">Commit review — harness repo</span>
 <span class="line">2026-10-23, 7 commits, medium depth</span>
 <span class="line">Score: 86/100</span>
@@ -149,29 +150,45 @@
     </div>
   </section>
 
-  <section class="cat" id="espresso" aria-labelledby="cat-title">
-    <div class="container cat__grid">
-      <figure class="cat__big">
-        <img src="assets/espresso-stare.jpg" width="1200" height="1600" loading="lazy" alt="Espresso, a black cat with yellow-green eyes, looking straight into the camera">
-      </figure>
-      <div class="cat__text">
+  <section class="section" aria-labelledby="lately-title">
+    <div class="container">
+      <div class="section__head">
+        <h2 id="lately-title">Lately</h2>
+      </div>
+      <dl class="lately">
+        <div><dt>Oct 2026 to now</dt><dd><strong>Talent Radar</strong>, with a partner, for a recruiter. Product, screens, the UK GDPR paperwork.</dd></div>
+        <div><dt>Dec 2025 to Oct 2026</dt><dd><strong>Operations, UK vehicle-leasing broker.</strong> The internal ticket queue, order admin for nine salespeople, hands-on IT, and from August the front end of the new company website. Built the four tools above on the side.</dd></div>
+        <div><dt>2025 to now</dt><dd><strong>MetaLoL</strong>, contributor. Small fixes on the live site, then a front-end remake on a branch.</dd></div>
+      </dl>
+    </div>
+  </section>
+
+  <section class="section cat" id="espresso" aria-labelledby="cat-title">
+    <div class="container">
+      <div class="section__head">
         <h2 id="cat-title">Espresso</h2>
-        <p class="lead">The site is named after my cat and coloured like her eyes. Black shorthair, yellow-green eyes, one white tuft.</p>
+      </div>
+      <div class="cat__grid">
+        <figure>
+          <img src="assets/espresso-stare.jpg" width="1200" height="1600" loading="lazy" alt="Espresso, a black cat with yellow-green eyes, looking straight into the camera">
+        </figure>
+        <div class="cat__text">
+          <p>The site is named after my cat and coloured like her eyes. Black shorthair, yellow-green eyes, one white tuft.</p>
+        </div>
       </div>
     </div>
   </section>
 
-  <section class="hire" id="hire" aria-labelledby="hire-title">
-    <div class="container hire__grid">
-      <div class="hire__head">
+  <section class="close" id="hire" aria-labelledby="hire-title">
+    <div class="container">
+      <div class="section__head">
         <h2 id="hire-title">Hire me</h2>
-        <p class="lead">Remote, UK-based. Product, operations or AI tooling.</p>
-        <a class="btn btn--primary" href="mailto:hello@espressothecat.com">Email me</a>
-        <p class="hire__promise">CV on request. Available now.</p>
-        <p class="hire__titles">Roles that fit: product operations, operations analyst, internal tools, AI tooling.</p>
+        <p>Remote, UK-based. Product, operations or AI tooling. CV on request.</p>
       </div>
-      <div class="hire__body">
-        <dl class="pitch">
+      <a class="close__mail" href="mailto:hello@espressothecat.com">Email me<span>hello@espressothecat.com</span></a>
+      <div class="close__grid">
+        <p class="close__note">Roles that fit: product operations, operations analyst, internal tools, AI tooling.</p>
+        <dl class="pitch" data-reveal>
           <div><dt>Builds tools people use daily</dt><dd>Four built on the job at my last employer, all still running when I left.</dd></div>
           <div><dt>Directs AI, with checks</dt><dd>Every change is read and run before it lands. Private data never reaches a cloud model.</dd></div>
           <div><dt>Writes it down</dt><dd>Briefs, data-protection paperwork, session write-ups. The next person can pick it up.</dd></div>
@@ -185,16 +202,12 @@
 <footer class="footer">
   <div class="container">
     <p class="footer__mast">espresso the cat</p>
-    <div class="footer__grid">
-      <div>
-        <p class="footer__note">Every screenshot and demo uses made-up data or public game data.</p>
-      </div>
-      <div class="footer__links">
-        <a href="https://github.com/beartreeuk">GitHub</a>
-        <a href="mailto:hello@espressothecat.com">hello@espressothecat.com</a>
-        <a href="work/this-site.html">How this site was made</a>
-      </div>
+    <div class="footer__links">
+      <a href="https://github.com/beartreeuk">GitHub</a>
+      <a href="mailto:hello@espressothecat.com">hello@espressothecat.com</a>
+      <a href="work/this-site.html">How this site was made</a>
     </div>
+    <p class="footer__note">Every screenshot and demo uses made-up data or public game data.</p>
   </div>
 </footer>
 

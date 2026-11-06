@@ -187,7 +187,6 @@ NAV = """<header class="nav">
     <ul>
       <li><a href="/#work"{w}>Work</a></li>
       <li><a href="/#how">How I work</a></li>
-      <li><a href="/#espresso">Espresso</a></li>
       <li><a href="/#hire">Hire me</a></li>
     </ul>
   </div>
@@ -299,36 +298,38 @@ open(f"{SITE}/work/this-site.html", "w", encoding="utf-8", newline="\n").write(p
 print("pages written")
 
 # ---------------- home page ----------------
-TILES = [
-  ("talent-radar", "Talent Radar", "A sourcing tool for a recruiter friend. It finds engineers from their public work and says, in plain English, why they fit the job. Built with a partner; I own the product side, the screens and the privacy paperwork. The Sonar view above is a working demo on its page.", "Private", "React, Go, Postgres", "lead", "talent-radar-sonar.jpg"),
-  ("back-office", "Back-office tools", "Four internal tools for a UK vehicle-leasing broker, built on the job: cancellations, invoicing into the accounts software, marketing uploads, and an order integration that carried 215 orders. All still in use when I left.", "In use", "Claude Code, internal tools", "tall", "schematic"),
-  ("harness", "A harness for Claude Code", "Everything I wired around Claude Code so it works like a colleague: it briefs each session on the project, blocks dangerous commands, reviews every commit for bugs, writes up the day, and takes instructions by voice.", "Daily use", "Node, SQLite, Ollama", "half", "harness-overview.jpg"),
-  ("metalol", "MetaLoL", "A new front end for a public League of Legends stats site, sister of MetaTFT. Tier list, champion pages, a phone layout and tests. Waiting for the owner’s review.", "On a branch", "React 19, TypeScript, Vite", "half", "metalol-tier-list.jpg"),
-  ("needle-drop", "Needle Drop", "A keyboard DJ rhythm game with roguelike runs: left hand mixes, right hand beatmatches, every record switch scores like a card game. Design written, first slice being built.", "In progress", "Godot 4.7, GDScript", "half", None),
-  ("ollama-mcp", "Local models for Claude", "Two small servers that hand long files to a model on my own graphics card and send back only the answer. Private data stays on the machine and Claude’s context stays small.", "Running", "Node, MCP, Ollama", "half", None),
-  ("fractal-mcp", "Fractal MCP", "A render farm for maths art that Claude can call like a tool: ask for a fractal in a sentence, get the picture back from my graphics card. Every render on this page came out of it.", "Running", "Node, Python, OpenCL", "half", "three-body.jpg"),
+ROWS = [
+  ("talent-radar", "Talent Radar", "Finds engineers from their public work and says, in plain English, why they fit the job. Built with a partner; I own the product side, the screens and the privacy paperwork.", "Private", "React, Go, Postgres", None),
+  ("back-office", "Back-office tools", "Four internal tools for a UK vehicle-leasing broker, built on the job: cancellations, invoicing, marketing uploads and an order integration that carried 215 orders. All still in use when I left.", "In use", "Claude Code, internal tools", "back-office-tools.svg"),
+  ("harness", "A harness for Claude Code", "Everything I wired around Claude Code so it works like a colleague: briefs each session, blocks dangerous commands, reviews every commit, writes up the day, takes instructions by voice.", "Daily use", "Node, SQLite, Ollama", "harness-overview.jpg"),
+  ("metalol", "MetaLoL", "A new front end for a public League of Legends stats site, sister of MetaTFT. Tier list, champion pages, a phone layout and tests.", "On a branch", "React 19, TypeScript, Vite", "metalol-tier-list.jpg"),
+  ("needle-drop", "Needle Drop", "A keyboard DJ rhythm game with roguelike runs: left hand mixes, right hand beatmatches, every record switch scores like a card game.", "In progress", "Godot 4.7, GDScript", None),
+  ("ollama-mcp", "Local models for Claude", "Two small servers that hand long files to a model on my own graphics card and send back only the answer. Private data stays on the machine.", "Running", "Node, MCP, Ollama", None),
+  ("fractal-mcp", "Fractal MCP", "A render farm for maths art that Claude can call like a tool: ask for a fractal in a sentence, get the picture back from my graphics card.", "Running", "Node, Python, OpenCL", "three-body.jpg"),
 ]
 
-def tile(t):
-    slug, title, blurb, chip, tags, size, img = t
-    cls = f"tile tile--{size}"
-    art = ""
-    if img == "schematic":
-        cls += " tile--split"
-        art = '<img class="tile__art--contain" src="assets/back-office-tools-phone.svg" width="700" height="680" loading="lazy" alt="">'
-    elif img:
-        cls += " tile--split" if slug != "fractal-mcp" else " tile--photo"
-        art = f'<img src="assets/{img}" width="1440" height="900" loading="lazy" alt="">'
-    else:
-        cls += " grained"
-    return f"""        <a class="{cls}" href="work/{slug}.html">
-          {art}
-          <div class="tile__text">
-            <h3>{e(title)}</h3>
-            <p>{blurb}</p>
-            <p class="stack"><span class="chip">{e(chip)}</span> {e(tags)}</p>
-          </div>
-        </a>
+DEMO = """          <figure class="demo">
+            <div class="demo__frame"><iframe src="work/demo/talent-radar.html" title="Talent Radar: the Sonar view, a working demo" loading="lazy"></iframe></div>
+            <a class="demo__fallback" href="work/demo/talent-radar.html">
+              <img src="assets/talent-radar-sonar.jpg" width="1600" height="900" loading="lazy" alt="The Sonar view: candidates as dots on rings around an ideal in the middle, one selected, with a match card beside it">
+              <span class="btn btn--primary">Open the demo</span>
+            </a>
+            <figcaption><span>Live. Click a dot, change the job, search, shortlist someone.</span><a href="work/talent-radar.html">About the project</a></figcaption>
+          </figure>
+"""
+
+def row(r, n):
+    slug, title, blurb, status, stack, img = r
+    attrs = f' data-img="assets/{img}"' if img else ""
+    feature = DEMO if slug == "talent-radar" else ""
+    return f"""        <li class="row"{attrs}>
+          <a href="work/{slug}.html">
+            <span class="row__n">{n:02d}</span>
+            <span class="row__main"><h3 class="row__title">{e(title)}</h3><span class="row__blurb">{e(blurb)}</span></span>
+            <span class="row__meta"><span class="row__status">{e(status)}</span><span class="row__stack">{e(stack)}</span></span>
+            <span class="row__go" aria-hidden="true">&rarr;</span>
+          </a>
+{feature}        </li>
 """
 
 REVIEW = term(["Commit review — harness repo",
@@ -358,44 +359,67 @@ INDEX = f"""<!doctype html>
 <body>
 <a class="skip" href="#work">Skip to the work</a>
 
+<figure class="ground" data-loop aria-hidden="true">
+  <img src="assets/clifford-still.jpg" width="2560" height="1440" alt="" fetchpriority="high">
+  <canvas id="silk"></canvas>
+</figure>
+
 {NAV.format(w='')}
 
 <main>
-  <section class="hero" aria-labelledby="hero-title">
-    <figure class="hero__art" data-loop>
-      <img src="assets/clifford-still.jpg" width="2560" height="1440" alt="" fetchpriority="high">
-      <canvas id="silk" aria-label="A Clifford attractor, drifting. Move the pointer to bend it, click for a new shape." role="img"></canvas>
-    </figure>
-    <div class="hero__body container">
+  <section class="hero container" aria-labelledby="hero-title">
+    <dl class="hero__facts">
+      <div><dt>Status</dt><dd>Available now</dd></div>
+      <div><dt>Where</dt><dd>Remote, UK</dd></div>
+      <div><dt>Looking for</dt><dd>Product, operations or AI tooling</dd></div>
+    </dl>
+    <div class="hero__body">
       <h1 id="hero-title">I build the tools a team is missing.</h1>
       <p class="lead">Mostly by directing Claude Code and testing what it makes. At my last job, operations at a UK vehicle-leasing broker, four things I built were still in daily use when I left.</p>
-      <p class="hero__status">Looking for a remote UK role in product, operations or AI tooling. Available now.</p>
-      <div class="hero__actions">
-        <a class="btn btn--primary" href="#work">See the work</a>
-        <a class="btn btn--quiet" href="mailto:hello@espressothecat.com">Email me</a>
-        <button class="btn btn--quiet" type="button" data-loop-toggle aria-controls="silk">Pause</button>
+      <div class="hero__links">
+        <a class="arrow" href="#work">See the work <span aria-hidden="true">&darr;</span></a>
+        <a class="arrow" href="mailto:hello@espressothecat.com">Email me <span aria-hidden="true">&rarr;</span></a>
       </div>
-      <p class="hero__hint" data-hint>A Clifford attractor, drawn live on your graphics card. Move to bend it, click for another.</p>
+    </div>
+    <div class="hero__foot">
+      <p>A Clifford attractor, drawn live on your graphics card. Move to bend it. Click for another.</p>
+      <button type="button" data-loop-toggle aria-controls="silk">Pause</button>
     </div>
   </section>
 
-  <section class="section work" id="work" aria-labelledby="work-title">
+  <section class="section" id="work" aria-labelledby="work-title">
     <div class="container">
-      <div class="head head--split">
+      <div class="section__head">
         <h2 id="work-title">Work</h2>
-        <p class="lead">Seven projects. Each opens a page with what I did, the stack and the skills.</p>
+        <p>Seven projects. Each opens a page with what I did, the stack and the skills.</p>
       </div>
-      <div class="bento" data-reveal>
-{''.join(tile(t) for t in TILES)}      </div>
+      <ol class="index" data-reveal>
+{''.join(row(r, i + 1) for i, r in enumerate(ROWS))}      </ol>
     </div>
   </section>
 
-  <section class="section lately" aria-labelledby="lately-title">
+  <section class="section" id="how" aria-labelledby="how-title">
     <div class="container">
-      <div class="head head--split">
+      <div class="section__head">
+        <h2 id="how-title">How I work with AI</h2>
+      </div>
+      <div class="how__grid">
+        <ol class="creed" data-reveal>
+          <li><p>I write the brief in plain words. Claude Code reads the code and proposes a plan, I say go, and I read and run every change before it lands.</p></li>
+          <li><p>Around that sits <a href="work/harness.html">a harness I built</a>: guards so the AI cannot read secrets or throw work away, a reviewer on every commit, and write-ups so nothing is lost between days.</p></li>
+          <li><p>Long files and private data go to a model on my own graphics card, not to the cloud. The tools are new; the habits are old ones: write it down, test it against the real thing, keep it small enough to finish.</p></li>
+        </ol>
+        {REVIEW}
+      </div>
+    </div>
+  </section>
+
+  <section class="section" aria-labelledby="lately-title">
+    <div class="container">
+      <div class="section__head">
         <h2 id="lately-title">Lately</h2>
       </div>
-      <dl class="timeline" data-reveal>
+      <dl class="lately">
         <div><dt>Oct 2026 to now</dt><dd><strong>Talent Radar</strong>, with a partner, for a recruiter. Product, screens, the UK GDPR paperwork.</dd></div>
         <div><dt>Dec 2025 to Oct 2026</dt><dd><strong>Operations, UK vehicle-leasing broker.</strong> The internal ticket queue, order admin for nine salespeople, hands-on IT, and from August the front end of the new company website. Built the four tools above on the side.</dd></div>
         <div><dt>2025 to now</dt><dd><strong>MetaLoL</strong>, contributor. Small fixes on the live site, then a front-end remake on a branch.</dd></div>
@@ -403,45 +427,32 @@ INDEX = f"""<!doctype html>
     </div>
   </section>
 
-  <section class="section how" id="how" aria-labelledby="how-title">
+  <section class="section cat" id="espresso" aria-labelledby="cat-title">
     <div class="container">
-      <div class="head head--split">
-        <h2 id="how-title">How I work with AI</h2>
-      </div>
-      <div class="how__grid">
-        <div class="how__text">
-          <p>I write the brief in plain words. Claude Code reads the code and proposes a plan, I say go, and I read and run every change before it lands.</p>
-          <p>Around that sits <a href="work/harness.html">a harness I built</a>: guards so the AI cannot read secrets or throw work away, a bot that reviews every commit, and write-ups so nothing is lost between days. Long files and private data go to a model on my own graphics card, not to the cloud.</p>
-          <p>The tools are new. The habits are old ones: write it down, test it against the real thing, keep it small enough to finish.</p>
-        </div>
-        {REVIEW}
-      </div>
-    </div>
-  </section>
-
-  <section class="cat" id="espresso" aria-labelledby="cat-title">
-    <div class="container cat__grid">
-      <figure class="cat__big">
-        <img src="assets/espresso-stare.jpg" width="1200" height="1600" loading="lazy" alt="Espresso, a black cat with yellow-green eyes, looking straight into the camera">
-      </figure>
-      <div class="cat__text">
+      <div class="section__head">
         <h2 id="cat-title">Espresso</h2>
-        <p class="lead">The site is named after my cat and coloured like her eyes. Black shorthair, yellow-green eyes, one white tuft.</p>
+      </div>
+      <div class="cat__grid">
+        <figure>
+          <img src="assets/espresso-stare.jpg" width="1200" height="1600" loading="lazy" alt="Espresso, a black cat with yellow-green eyes, looking straight into the camera">
+        </figure>
+        <div class="cat__text">
+          <p>The site is named after my cat and coloured like her eyes. Black shorthair, yellow-green eyes, one white tuft.</p>
+        </div>
       </div>
     </div>
   </section>
 
-  <section class="hire" id="hire" aria-labelledby="hire-title">
-    <div class="container hire__grid">
-      <div class="hire__head">
+  <section class="close" id="hire" aria-labelledby="hire-title">
+    <div class="container">
+      <div class="section__head">
         <h2 id="hire-title">Hire me</h2>
-        <p class="lead">Remote, UK-based. Product, operations or AI tooling.</p>
-        <a class="btn btn--primary" href="mailto:hello@espressothecat.com">Email me</a>
-        <p class="hire__promise">CV on request. Available now.</p>
-        <p class="hire__titles">Roles that fit: product operations, operations analyst, internal tools, AI tooling.</p>
+        <p>Remote, UK-based. Product, operations or AI tooling. CV on request.</p>
       </div>
-      <div class="hire__body">
-        <dl class="pitch">
+      <a class="close__mail" href="mailto:hello@espressothecat.com">Email me<span>hello@espressothecat.com</span></a>
+      <div class="close__grid">
+        <p class="close__note">Roles that fit: product operations, operations analyst, internal tools, AI tooling.</p>
+        <dl class="pitch" data-reveal>
           <div><dt>Builds tools people use daily</dt><dd>Four built on the job at my last employer, all still running when I left.</dd></div>
           <div><dt>Directs AI, with checks</dt><dd>Every change is read and run before it lands. Private data never reaches a cloud model.</dd></div>
           <div><dt>Writes it down</dt><dd>Briefs, data-protection paperwork, session write-ups. The next person can pick it up.</dd></div>
@@ -455,16 +466,12 @@ INDEX = f"""<!doctype html>
 <footer class="footer">
   <div class="container">
     <p class="footer__mast">espresso the cat</p>
-    <div class="footer__grid">
-      <div>
-        <p class="footer__note">Every screenshot and demo uses made-up data or public game data.</p>
-      </div>
-      <div class="footer__links">
-        <a href="https://github.com/beartreeuk">GitHub</a>
-        <a href="mailto:hello@espressothecat.com">hello@espressothecat.com</a>
-        <a href="work/this-site.html">How this site was made</a>
-      </div>
+    <div class="footer__links">
+      <a href="https://github.com/beartreeuk">GitHub</a>
+      <a href="mailto:hello@espressothecat.com">hello@espressothecat.com</a>
+      <a href="work/this-site.html">How this site was made</a>
     </div>
+    <p class="footer__note">Every screenshot and demo uses made-up data or public game data.</p>
   </div>
 </footer>
 
@@ -475,27 +482,3 @@ INDEX = f"""<!doctype html>
 """
 open(f"{SITE}/index.html", "w", encoding="utf-8", newline="\n").write(INDEX)
 print("index written")
-
-CSS = """
-/* rewrite 2026-11-06: hero status line, Lately timeline, How I work two-column */
-.hero__status { color: var(--color-accent-2); font-weight: 600; max-width: 40ch; }
-.timeline { margin: 0; display: grid; gap: var(--space-lg); max-width: 72ch; }
-.timeline div { display: grid; grid-template-columns: minmax(0, 11rem) minmax(0, 1fr); gap: var(--space-md); padding-top: var(--space-md); border-top: var(--rule-hair) solid var(--color-rule); }
-.timeline dt { color: var(--color-muted); font-size: var(--text-sm); padding-top: 0.2em; }
-.timeline dd { margin: 0; color: var(--color-ink-2); }
-.timeline strong { color: var(--color-ink); font-weight: 600; }
-.how__grid { display: grid; grid-template-columns: minmax(0, 5fr) minmax(0, 7fr); gap: var(--space-3xl); align-items: start; }
-.how__text { display: grid; gap: var(--space-md); color: var(--color-ink-2); max-width: 52ch; font-size: var(--text-lead); line-height: 1.45; }
-.how__text a { color: var(--color-ink); }
-.how__grid .term { position: static; }
-.how__grid .term__screen { min-height: 0; }
-@media (max-width: 60rem) {
-  .timeline div { grid-template-columns: 1fr; gap: var(--space-2xs); }
-  .how__grid { grid-template-columns: 1fr; gap: var(--space-xl); }
-}
-"""
-css_path = f"{SITE}/style.css"
-s = open(css_path, encoding="utf-8").read()
-if ".hero__status" not in s:
-    open(css_path, "w", encoding="utf-8", newline="\n").write(s.rstrip("\n") + "\n" + CSS)
-    print("css appended")

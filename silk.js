@@ -1,5 +1,5 @@
 "use strict";
-// Clifford attractors drifting on the GPU, adapted from the Clifford Silk wallpaper for the hero.
+// Clifford attractors drifting on the GPU, adapted from the Clifford Silk wallpaper. It is the ground of the whole page.
 //   x' = sin(a y) + c cos(a x),   y' = sin(b x) + d cos(b y)
 // Points live on the GPU and take one step of the map per frame (transform feedback), drawn onto a canvas that fades a
 // little every frame. a, b, c, d drift slowly; a CPU check spots shapes that collapse and hurries the drift past them.
@@ -7,51 +7,23 @@
 
 (() => {
   const reduce = matchMedia("(prefers-reduced-motion: reduce)");
+  const small = matchMedia("(max-width: 60rem)");
+  const fine = matchMedia("(hover: hover) and (pointer: fine)");
 
   // Every looping thing on the page: hold it when paused, off screen or under reduced motion.
   function loop(el, start, stop) {
     const btn = el.querySelector("[data-loop-toggle]") ||
       document.querySelector(`[data-loop-toggle][aria-controls="${el.querySelector("canvas")?.id}"]`);
     const s = { seen: false, held: reduce.matches, hidden: document.hidden };
-    const label = btn ? btn.textContent.replace(/^(Pause|Play)/, "") : "";
     const sync = () => {
       const run = s.seen && !s.held && !s.hidden;
       run ? start() : stop();
-      if (btn) btn.textContent = (s.held ? "Play" : "Pause") + label;
+      if (btn) btn.textContent = s.held ? "Play" : "Pause";
     };
     btn?.addEventListener("click", () => { s.held = !s.held; sync(); });
     document.addEventListener("visibilitychange", () => { s.hidden = document.hidden; sync(); });
     new IntersectionObserver(([e]) => { s.seen = e.isIntersecting; sync(); }).observe(el);
     sync();
-  }
-
-  // The dance video.
-  document.querySelectorAll(".tile[data-loop]").forEach((fig) => {
-    const v = fig.querySelector("video");
-    loop(fig, () => { v.preload = "auto"; v.play().catch(() => {}); }, () => v.pause());
-  });
-
-  // Espresso's notes type themselves out the first time the footer comes into view.
-  const typer = document.querySelector("[data-typer]");
-  if (typer && !reduce.matches) {
-    const qs = [...typer.querySelectorAll("q")];
-    const texts = qs.map((q) => q.textContent);
-    new IntersectionObserver(([e], obs) => {
-      if (!e.isIntersecting) return;
-      obs.disconnect();
-      qs.forEach((q) => { q.textContent = ""; });
-      let qi = 0, ci = 0;
-      const step = () => {
-        if (qi >= qs.length) return;
-        const q = qs[qi], t = texts[qi];
-        q.classList.add("is-typing");
-        ci = Math.min(t.length, ci + (t.length > 120 ? 6 : 1));
-        q.textContent = t.slice(0, ci);
-        if (ci >= t.length) { q.classList.remove("is-typing"); qi++; ci = 0; setTimeout(step, 450); }
-        else setTimeout(step, 28 + Math.random() * 40);
-      };
-      step();
-    }, { threshold: 0.4 }).observe(typer);
   }
 
   // The nav gains its ground once the page has scrolled, and marks the section in view.
@@ -70,35 +42,71 @@
     links.forEach((a) => { const t = document.querySelector(a.getAttribute("href")); if (t) sections.observe(t); });
   }
 
-  // The tiles slide in once, staggered.
+  // Groups slide in once, staggered.
   document.querySelectorAll("[data-reveal]").forEach((group) => {
     [...group.children].forEach((el, i) => el.style.setProperty("--i", i));
     new IntersectionObserver(([e], obs) => {
       if (!e.isIntersecting) return;
       group.classList.add("is-in");
       obs.disconnect();
-    }, { threshold: 0.15 }).observe(group);
+    }, { threshold: 0.1 }).observe(group);
   });
 
-  // The pinned terminal replays the stage whose panel is in the middle of the screen.
-  const term = document.querySelector("[data-term]");
-  const panels = [...document.querySelectorAll(".panels > li")];
-  if (term && panels.length) {
-    const screens = panels.map((li) => li.querySelector("template").content.firstElementChild);
-    let active = -1;
-    const show = (i) => {
-      if (i === active) return;
-      active = i;
-      const code = screens[i].cloneNode(true);
-      code.querySelectorAll(".line").forEach((l, n) => l.style.setProperty("--i", n));
-      term.replaceChildren(code);
-      panels.forEach((li, j) => li.classList.toggle("is-active", j === i));
+  // Terminal figures type their lines in once they are on screen.
+  document.querySelectorAll(".term").forEach((term) => {
+    term.querySelectorAll(".line").forEach((l, n) => l.style.setProperty("--i", n));
+    new IntersectionObserver(([e], obs) => {
+      if (!e.isIntersecting) return;
+      term.classList.add("is-in");
+      obs.disconnect();
+    }, { threshold: 0.3 }).observe(term);
+  });
+
+  // The work index: a project's screen follows the pointer over its row.
+  const rows = [...document.querySelectorAll(".row[data-img]")];
+  if (rows.length && fine.matches && !reduce.matches) {
+    const peek = document.createElement("img");
+    peek.className = "peek";
+    peek.alt = "";
+    peek.setAttribute("aria-hidden", "true");
+    document.body.appendChild(peek);
+    let x = 0, y = 0, raf = 0;
+    const place = () => { raf = 0; peek.style.left = x + 28 + "px"; peek.style.top = y + "px"; };
+    rows.forEach((row) => {
+      const link = row.querySelector("a");
+      link.addEventListener("pointerenter", () => {
+        const src = row.dataset.img;
+        if (peek.getAttribute("src") !== src) peek.src = src;
+        peek.classList.toggle("peek--contain", src.endsWith(".svg"));
+        peek.classList.add("is-on");
+      });
+      link.addEventListener("pointerleave", () => peek.classList.remove("is-on"));
+      link.addEventListener("pointermove", (e) => {
+        x = e.clientX; y = e.clientY;
+        if (!raf) raf = requestAnimationFrame(place);
+      }, { passive: true });
+    });
+  }
+
+  // The ground dims past the hero and comes back for the close.
+  const ground = document.querySelector(".ground");
+  if (ground) {
+    const root = document.documentElement;
+    let raf = 0;
+    const dim = () => {
+      raf = 0;
+      if (small.matches) { root.style.removeProperty("--ground-dim"); return; }
+      const vh = innerHeight, y = scrollY;
+      const end = root.scrollHeight - vh;
+      const past = Math.min(1, Math.max(0, (y - vh * 0.35) / (vh * 0.65)));
+      let d = 1 - 0.84 * past;
+      const near = Math.min(1, Math.max(0, 1 - (end - y) / (vh * 0.9)));
+      d = Math.max(d, 0.16 + 0.34 * near);
+      root.style.setProperty("--ground-dim", d.toFixed(3));
     };
-    show(0);
-    const io = new IntersectionObserver((entries) => {
-      entries.forEach((e) => { if (e.isIntersecting) show(panels.indexOf(e.target)); });
-    }, { rootMargin: matchMedia("(max-width: 60rem)").matches ? "-10% 0px -58% 0px" : "-50% 0px -35% 0px" });
-    panels.forEach((li) => io.observe(li));
+    addEventListener("scroll", () => { if (!raf) raf = requestAnimationFrame(dim); }, { passive: true });
+    addEventListener("resize", () => { if (!raf) raf = requestAnimationFrame(dim); });
+    dim();
   }
 
   // The attractor.
@@ -112,8 +120,7 @@
 
   // Espresso: the ground of the page, through her eye colour, to near white.
   const PAL = [[0.11, 0.09, 0.07], [0.16, 0.12, 0.07], [0.36, 0.38, 0.08], [0.72, 0.76, 0.18], [0.92, 0.93, 0.55], [1, 1, 0.92]];
-  const small = matchMedia("(max-width: 60rem)").matches;
-  const N = small ? 140000 : 320000;
+  const N = small.matches ? 140000 : 320000;
   const DECAY = 0.965;
 
   const HASH = `uint hash(uint x) { x ^= x >> 16u; x *= 0x7feb352du; x ^= x >> 15u; x *= 0x846ca68bu; x ^= x >> 16u; return x; }`;
@@ -272,16 +279,15 @@ void main() {
   check(params(clock));
   const view = { cx: health.cx, cy: health.cy, hx: health.hx, hy: health.hy };
 
-  // The visitor can play: the pointer bends a and b, a click jumps to another stretch of parameter space.
+  // The visitor can play: the pointer bends a and b anywhere on the page; a click on the hero jumps to another stretch of parameter space.
   const bend = { x: 0, y: 0 }, bendTo = { x: 0, y: 0 };
-  const hero = cv.closest(".hero");
-  hero.addEventListener("pointermove", (e) => {
-    const r = hero.getBoundingClientRect();
-    bendTo.x = ((e.clientX - r.left) / r.width - 0.5) * 0.5;
-    bendTo.y = ((e.clientY - r.top) / r.height - 0.5) * 0.5;
+  addEventListener("pointermove", (e) => {
+    bendTo.x = (e.clientX / innerWidth - 0.5) * 0.5;
+    bendTo.y = (e.clientY / innerHeight - 0.5) * 0.5;
   }, { passive: true });
-  hero.addEventListener("pointerleave", () => { bendTo.x = 0; bendTo.y = 0; });
-  hero.addEventListener("click", (e) => {
+  document.addEventListener("pointerleave", () => { bendTo.x = 0; bendTo.y = 0; });
+  const hero = document.querySelector(".hero");
+  hero?.addEventListener("click", (e) => {
     if (e.target.closest("a, button")) return;
     clock += 60 + Math.random() * 140;
     check(params(clock));
@@ -301,7 +307,7 @@ void main() {
     const k = 1 - Math.exp(-dt / 0.9);
     for (const key of ["cx", "cy", "hx", "hy"]) view[key] += (health[key] - view[key]) * k;
 
-    // Frame the shape on the right on wide screens, so the head on the left stays readable.
+    // Frame the shape on the right on wide screens, so the words on the left stay readable.
     const aspect = W / H, wide = aspect > 1.2;
     const fill = wide ? 0.84 : 0.7;
     let sy = fill / view.hy, sx = sy / aspect;
