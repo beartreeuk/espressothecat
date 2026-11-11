@@ -1,10 +1,6 @@
 "use strict";
-// Clifford attractors drifting on the GPU, adapted from the Clifford Silk wallpaper. It is the ground of the whole page.
-//   x' = sin(a y) + c cos(a x),   y' = sin(b x) + d cos(b y)
-// Points live on the GPU and take several steps of the map per frame (transform feedback), each landing added into a
-// float canvas that fades a little every frame. Brightness is the log of how often the map lands on a pixel; colour is
-// the mean direction of those jumps, between Espresso's eye green and her amber. a, b, c, d drift slowly; a CPU check
-// spots shapes that collapse and hurries the drift past them.
+// The ground of the whole page: three equal masses released from rest, simulated live (see below),
+// plus the small page behaviours: pausing loops, the nav, reveals, the terminal figures and the work peek.
 // Runs only while on screen, with the tab visible, without reduced motion, and until the visitor pauses it.
 
 (() => {
@@ -111,7 +107,12 @@
     dim();
   }
 
-  // The attractor.
+  // The ground: three equal masses released from rest, with a cloud of dust released from rest among them.
+  //   r_i'' = sum over j of m_j (r_j - r_i) / |r_j - r_i|^3      (G = 1, very slightly softened)
+  // The masses are stepped on the CPU in double precision, with steps that shrink on close passes. The dust is
+  // massless (it feels the masses, they don't feel it) and is stepped on the GPU with transform feedback.
+  // Everything lands in a float canvas that fades: the dust quickly, the masses' trails slowly. Colour is speed,
+  // from night to white heat. When a mass leaves for good, the run fades out and a new triangle is dropped.
   const cv = document.getElementById("silk");
   if (!cv) return;
   const gl = cv.getContext("webgl2", { antialias: false, alpha: false, depth: false, stencil: false });
@@ -120,62 +121,80 @@
   const floatBlend = !!gl.getExtension("EXT_float_blend");
   const [IFMT, TYPE] = floatBlend ? [gl.RGBA32F, gl.FLOAT] : [gl.RGBA16F, gl.HALF_FLOAT];
 
-  // Espresso: the ground of the page, up through her eye colour (A) or her amber (B), to near white.
-  // Which ramp a pixel uses comes from the maths: the direction the map throws the points that land there.
-  const PAL_A = [[0.11, 0.09, 0.07], [0.19, 0.19, 0.06], [0.42, 0.48, 0.09], [0.73, 0.81, 0.22], [0.93, 0.96, 0.6], [1, 1, 0.93]];
-  const PAL_B = [[0.11, 0.09, 0.07], [0.23, 0.12, 0.06], [0.56, 0.29, 0.09], [0.87, 0.57, 0.2], [0.98, 0.85, 0.58], [1, 0.98, 0.92]];
-  const N = small.matches ? 140000 : 320000;
-  const DECAY = 0.972;
-  // Map steps per frame: each step lands every point somewhere new on the attractor. Backs off on slow machines.
-  let K = small.matches ? 3 : 5;
+  // Night, through ember, to white heat. The first stop is the page's own ground.
+  const HEAT = [[0.11, 0.09, 0.07], [0.3, 0.07, 0.34], [0.76, 0.12, 0.4], [0.97, 0.3, 0.13], [1, 0.6, 0.12], [1, 0.87, 0.42], [1, 0.99, 0.9]];
+  const MAXB = 5;
+  const N = small.matches ? 90000 : 260000;
+  let K = small.matches ? 3 : 5; // dust steps per frame; drops on slow machines
+  const SPEED = 0.7; // simulated time per second
+  const EPS2 = 0.02 * 0.02;
+  const DUST_HALF = 0.16, TRAIL_HALF = 6; // seconds to fade to half
+  const LOGD = Math.log(1 + 60), GAIN_T = 2.5, LOGT = Math.log(1 + 30);
 
   const HASH = `uint hash(uint x) { x ^= x >> 16u; x *= 0x7feb352du; x ^= x >> 15u; x *= 0x846ca68bu; x ^= x >> 16u; return x; }`;
-  const VS_POINTS = `#version 300 es
+  const VS_DUST = `#version 300 es
 precision highp float; precision highp int;
-in vec2 aPos;
-uniform vec4 uP; uniform uint uFrame; uniform uint uReseed; uniform vec4 uMap;
-out vec2 vPos; out vec2 vOri;
+in vec4 aS;
+uniform vec3 uB[${MAXB}]; uniform int uNB; uniform float uDt; uniform uint uSeed; uniform uint uReseed;
+uniform float uR0; uniform float uFar; uniform vec4 uMap;
+out vec4 vS; out float vHeat;
 ${HASH}
-vec2 stepC(vec2 q) { return vec2(sin(uP.x * q.y) + uP.z * cos(uP.x * q.x), sin(uP.y * q.x) + uP.w * cos(uP.y * q.y)); }
-void main() {
-  vec2 p = aPos;
-  uint h = hash(uint(gl_VertexID) ^ (uFrame * 0x9E3779B9u));
-  if ((h % 10000u) < uReseed || any(isnan(p)) || abs(p.x) > 8.0 || abs(p.y) > 8.0) {
-    uint h2 = hash(h + 0x68E31DA4u);
-    p = vec2(float(h & 0xffffu), float(h2 & 0xffffu)) / 32768.0 - 1.0;
-    for (int i = 0; i < 12; i++) p = stepC(p);
+vec2 pull(vec2 p) {
+  vec2 a = vec2(0.0);
+  for (int i = 0; i < ${MAXB}; i++) {
+    if (i >= uNB) break;
+    vec2 d = uB[i].xy - p;
+    float r2 = dot(d, d) + 0.0025;
+    a += uB[i].z * d * inversesqrt(r2 * r2 * r2);
   }
-  vec2 n = stepC(p);
-  // The orientation of the jump (angle doubled, so opposite jumps agree) as cos 2t, sin 2t.
-  vec2 d = n - p;
-  vec2 u = d / max(length(d), 1e-6);
-  vOri = vec2(u.x * u.x - u.y * u.y, 2.0 * u.x * u.y);
-  vPos = n;
-  gl_Position = vec4(n * uMap.xy + uMap.zw, 0.0, 1.0);
+  return a;
+}
+void main() {
+  vec4 s = aS;
+  uint h = hash(uint(gl_VertexID) ^ (uSeed * 0x9E3779B9u));
+  if ((h % 10000u) < uReseed || any(isnan(s)) || dot(s.xy, s.xy) > uFar * uFar) {
+    uint h2 = hash(h + 0x68E31DA4u);
+    float a = float(h & 0xffffu) / 65536.0 * 6.2831853;
+    float r = uR0 * sqrt(float(h2 & 0xffffu) / 65536.0);
+    s = vec4(cos(a) * r, sin(a) * r, 0.0, 0.0);
+  }
+  s.zw += pull(s.xy) * uDt;
+  s.xy += s.zw * uDt;
+  vS = s;
+  float v = length(s.zw);
+  vHeat = v / (v + 1.4);
+  gl_Position = vec4(s.xy * uMap.xy + uMap.zw, 0.0, 1.0);
   gl_PointSize = 1.0;
 }`;
-  const FS_POINTS = `#version 300 es
-precision highp float; in vec2 vOri; out vec4 o; void main() { o = vec4(1.0, vOri, 0.0); }`;
+  const FS_DUST = `#version 300 es
+precision highp float; in float vHeat; out vec4 o; void main() { o = vec4(1.0, vHeat, 0.0, 0.0); }`;
+  const VS_TRAIL = `#version 300 es
+precision highp float;
+in vec3 aT; uniform vec4 uMap; uniform float uSize; out float vHeat;
+void main() { vHeat = aT.z; gl_Position = vec4(aT.xy * uMap.xy + uMap.zw, 0.0, 1.0); gl_PointSize = uSize; }`;
+  const FS_TRAIL = `#version 300 es
+precision highp float; in float vHeat; uniform float uW; out vec4 o;
+void main() { vec2 c = gl_PointCoord * 2.0 - 1.0; float k = uW * max(0.0, 1.0 - dot(c, c)); o = vec4(0.0, 0.0, k, k * vHeat); }`;
   const VS_QUAD = `#version 300 es
 void main() { vec2 p = vec2(float((gl_VertexID << 1) & 2), float(gl_VertexID & 2)); gl_Position = vec4(p * 2.0 - 1.0, 0.0, 1.0); }`;
   const FS_FADE = `#version 300 es
 precision highp float; out vec4 o; void main() { o = vec4(0.0); }`;
   const FS_SHOW = `#version 300 es
 precision highp float;
-uniform sampler2D uAcc; uniform float uInvMean; uniform float uLogMax; uniform float uPhase; uniform vec3 uA[6]; uniform vec3 uB[6];
+uniform sampler2D uAcc; uniform float uInvMean; uniform float uLogD; uniform float uGainT; uniform float uLogT; uniform vec3 uH[7];
 out vec4 o;
-vec3 rampA(float t) { t = clamp(t, 0.0, 1.0) * 5.0; int i = int(min(floor(t), 4.0)); return mix(uA[i], uA[i + 1], t - float(i)); }
-vec3 rampB(float t) { t = clamp(t, 0.0, 1.0) * 5.0; int i = int(min(floor(t), 4.0)); return mix(uB[i], uB[i + 1], t - float(i)); }
+vec3 heat(float t) { t = clamp(t, 0.0, 1.0) * 6.0; int i = int(min(floor(t), 5.0)); return mix(uH[i], uH[i + 1], t - float(i)); }
 void main() {
   vec4 a = texelFetch(uAcc, ivec2(gl_FragCoord.xy), 0);
-  // Brightness: log of how often the map lands here, so the folds burn white and single threads stay fine.
-  float v = clamp(log(1.0 + a.r * uInvMean) / uLogMax, 0.0, 1.0);
-  v = v * v * (3.0 - 2.0 * v);
-  // Hue: the mean orientation of the jumps that landed here, turning slowly.
-  vec2 m = a.r > 0.0 ? a.gb / a.r : vec2(0.0);
-  float k = clamp(length(m), 0.0, 1.0);
-  float s = k > 1e-4 ? 0.5 + 0.5 * k * cos(atan(m.y, m.x) + uPhase) : 0.5;
-  o = vec4(mix(rampA(v), rampB(v), s), 1.0);
+  // Dust: log of how much lands here, coloured by its mean speed; it stays below white.
+  float vd = clamp(log(1.0 + a.r * uInvMean) / uLogD, 0.0, 1.0);
+  float hd = a.r > 0.0 ? a.g / a.r : 0.0;
+  // The masses' trails: brighter, and the fastest stretches reach white heat.
+  float vt = clamp(log(1.0 + a.b * uGainT) / uLogT, 0.0, 1.0);
+  float ht = a.b > 0.0 ? a.a / a.b : 0.0;
+  // The dust is an undertone: it never climbs past the night colours, and slow dust stays dark.
+  float td = vd * 0.26 * smoothstep(0.1, 0.8, hd);
+  o = vec4(heat(max(td, vt * (0.45 + 0.75 * ht))), 1.0);
 }`;
 
   function compile(type, src) {
@@ -201,32 +220,31 @@ void main() {
     return { p, u };
   }
 
-  let P_POINTS, P_FADE, P_SHOW;
+  let P_DUST, P_TRAIL, P_FADE, P_SHOW;
   try {
-    P_POINTS = program(VS_POINTS, FS_POINTS, ["vPos"]);
+    P_DUST = program(VS_DUST, FS_DUST, ["vS"]);
+    P_TRAIL = program(VS_TRAIL, FS_TRAIL);
     P_FADE = program(VS_QUAD, FS_FADE);
     P_SHOW = program(VS_QUAD, FS_SHOW);
   } catch (e) { return; }
 
-  const startPos = new Float32Array(N * 2);
-  for (let i = 0; i < startPos.length; i++) startPos[i] = Math.random() * 2 - 1;
+  // Dust state (x, y, vx, vy), ping-ponged through transform feedback.
   const bufs = [0, 1].map(() => {
     const b = gl.createBuffer();
     gl.bindBuffer(gl.ARRAY_BUFFER, b);
-    gl.bufferData(gl.ARRAY_BUFFER, startPos, gl.DYNAMIC_COPY);
+    gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(N * 4), gl.DYNAMIC_COPY);
     return b;
   });
-  const aPos = gl.getAttribLocation(P_POINTS.p, "aPos");
+  const aS = gl.getAttribLocation(P_DUST.p, "aS");
   const vaos = bufs.map((b) => {
     const v = gl.createVertexArray();
     gl.bindVertexArray(v);
     gl.bindBuffer(gl.ARRAY_BUFFER, b);
-    gl.enableVertexAttribArray(aPos);
-    gl.vertexAttribPointer(aPos, 2, gl.FLOAT, false, 0, 0);
+    gl.enableVertexAttribArray(aS);
+    gl.vertexAttribPointer(aS, 4, gl.FLOAT, false, 0, 0);
     gl.bindVertexArray(null);
     return v;
   });
-  gl.bindBuffer(gl.ARRAY_BUFFER, null);
   const tfs = bufs.map((b) => {
     const t = gl.createTransformFeedback();
     gl.bindTransformFeedback(gl.TRANSFORM_FEEDBACK, t);
@@ -234,9 +252,24 @@ void main() {
     gl.bindTransformFeedback(gl.TRANSFORM_FEEDBACK, null);
     return t;
   });
+
+  // The masses' trails: soft points laid less than half a pixel apart, so the line is solid at any speed.
+  const MAXV = 6000;
+  const trailData = new Float32Array((MAXB * (MAXV + 1) + MAXB) * 3);
+  const trailBuf = gl.createBuffer();
+  gl.bindBuffer(gl.ARRAY_BUFFER, trailBuf);
+  gl.bufferData(gl.ARRAY_BUFFER, trailData.byteLength, gl.DYNAMIC_DRAW);
+  const aT = gl.getAttribLocation(P_TRAIL.p, "aT");
+  const trailVao = gl.createVertexArray();
+  gl.bindVertexArray(trailVao);
+  gl.bindBuffer(gl.ARRAY_BUFFER, trailBuf);
+  gl.enableVertexAttribArray(aT);
+  gl.vertexAttribPointer(aT, 3, gl.FLOAT, false, 0, 0);
+  gl.bindVertexArray(null);
+  gl.bindBuffer(gl.ARRAY_BUFFER, null);
   const emptyVao = gl.createVertexArray();
 
-  let acc = null, fbo = null, W = 0, H = 0;
+  let acc = null, fbo = null, W = 0, H = 0, broken = false;
   function resize() {
     const dpr = Math.min(window.devicePixelRatio || 1, small.matches ? 1.5 : 2);
     const r = cv.getBoundingClientRect();
@@ -254,106 +287,177 @@ void main() {
     fbo = gl.createFramebuffer();
     gl.bindFramebuffer(gl.FRAMEBUFFER, fbo);
     gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, acc, 0);
+    if (gl.checkFramebufferStatus(gl.FRAMEBUFFER) !== gl.FRAMEBUFFER_COMPLETE) broken = true;
     gl.clearColor(0, 0, 0, 0);
     gl.clear(gl.COLOR_BUFFER_BIT);
     gl.bindFramebuffer(gl.FRAMEBUFFER, null);
   }
 
-  function params(t) {
-    return [
-      1.95 * Math.sin(0.0213 * t + 0.4),
-      1.95 * Math.sin(0.0171 * t + 2.3),
-      1.30 * Math.sin(0.0129 * t + 1.1) + 0.25 * Math.sin(0.031 * t),
-      1.30 * Math.sin(0.0097 * t + 4.0) + 0.25 * Math.sin(0.027 * t + 1.0),
-    ];
+  // The masses.
+  const B = { n: 3, x: new Float64Array(MAXB), y: new Float64Array(MAXB), vx: new Float64Array(MAXB), vy: new Float64Array(MAXB),
+    m: new Float64Array(MAXB), ax: new Float64Array(MAXB), ay: new Float64Array(MAXB) };
+  // Accelerations, and the shortest local orbit time, which sets the next step size.
+  function accel() {
+    const { n, x, y, m, ax, ay } = B;
+    for (let i = 0; i < n; i++) { ax[i] = 0; ay[i] = 0; }
+    let tMin = 1;
+    for (let i = 0; i < n; i++) for (let j = i + 1; j < n; j++) {
+      const dx = x[j] - x[i], dy = y[j] - y[i];
+      const r2 = dx * dx + dy * dy + EPS2, r = Math.sqrt(r2), inv = 1 / (r2 * r);
+      ax[i] += m[j] * dx * inv; ay[i] += m[j] * dy * inv;
+      ax[j] -= m[i] * dx * inv; ay[j] -= m[i] * dy * inv;
+      tMin = Math.min(tMin, Math.sqrt(r2 * r / (m[i] + m[j])));
+    }
+    return tMin;
   }
-  const health = { ok: true, cx: 0, cy: 0, hx: 2, hy: 2 };
-  function check([a, b, c, d]) {
-    let x = 0.1, y = 0.13;
-    for (let i = 0; i < 300; i++) { const nx = Math.sin(a * y) + c * Math.cos(a * x); y = Math.sin(b * x) + d * Math.cos(b * y); x = nx; }
-    const xs = new Float32Array(6000), ys = new Float32Array(6000);
-    for (let i = 0; i < 6000; i++) {
-      const nx = Math.sin(a * y) + c * Math.cos(a * x); y = Math.sin(b * x) + d * Math.cos(b * y); x = nx;
-      xs[i] = x; ys[i] = y;
+  let tScale = 1;
+  function stepB(dt) { // kick, drift, kick
+    const { n, x, y, vx, vy, ax, ay } = B;
+    for (let i = 0; i < n; i++) { vx[i] += ax[i] * dt * 0.5; vy[i] += ay[i] * dt * 0.5; x[i] += vx[i] * dt; y[i] += vy[i] * dt; }
+    tScale = accel();
+    for (let i = 0; i < n; i++) { vx[i] += ax[i] * dt * 0.5; vy[i] += ay[i] * dt * 0.5; }
+  }
+  // A mass has left for good when it is far out, moving away, and faster than the rest can call back.
+  function escaped() {
+    const { n, x, y, vx, vy, m } = B;
+    for (let i = 0; i < n; i++) {
+      let M = 0, cx = 0, cy = 0, cvx = 0, cvy = 0;
+      for (let j = 0; j < n; j++) if (j !== i) { M += m[j]; cx += m[j] * x[j]; cy += m[j] * y[j]; cvx += m[j] * vx[j]; cvy += m[j] * vy[j]; }
+      cx /= M; cy /= M; cvx /= M; cvy /= M;
+      const dx = x[i] - cx, dy = y[i] - cy, dvx = vx[i] - cvx, dvy = vy[i] - cvy, r = Math.hypot(dx, dy);
+      if (r > 6 * run.R) return true;
+      if (r > 3 * run.R && dx * dvx + dy * dvy > 0 && 0.5 * (dvx * dvx + dvy * dvy) - M / r > 0) return true;
     }
-    const sx = Float32Array.from(xs).sort(), sy = Float32Array.from(ys).sort();
-    const x0 = sx[30], x1 = sx[5969], y0 = sy[30], y1 = sy[5969];
-    const seen = new Uint8Array(48 * 48);
-    let cells = 0;
-    for (let i = 0; i < 6000; i++) {
-      const gx = Math.min(47, Math.max(0, Math.floor((xs[i] - x0) / (x1 - x0 + 1e-9) * 48)));
-      const gy = Math.min(47, Math.max(0, Math.floor((ys[i] - y0) / (y1 - y0 + 1e-9) * 48)));
-      if (!seen[gy * 48 + gx]) { seen[gy * 48 + gx] = 1; cells++; }
-    }
-    health.ok = cells > 160 && (x1 - x0) > 0.6 && (y1 - y0) > 0.6;
-    if (health.ok) Object.assign(health, { cx: (x0 + x1) / 2, cy: (y0 + y1) / 2, hx: (x1 - x0) / 2 * 1.06, hy: (y1 - y0) / 2 * 1.06 });
+    return false;
   }
 
-  let clock = (Date.now() / 1000) % 100000;
-  let frame = 0, step = 0, slow = 0, last = 0, lastCheck = 0, raf = 0, shown = false;
-  const LOGMAX = small.matches ? 28 : 48; // hits per pixel, as a multiple of the mean, that reads as full white
-  check(params(clock));
-  const view = { cx: health.cx, cy: health.cy, hx: health.hx, hy: health.hy };
+  const run = { R: 1, age: 0, end: -1, reseedAll: true, clear: false };
+  const view = { r: 1.2 };
+  const last = new Array(MAXB).fill(null); // last trail vertex per mass: [x, y, heat]
+  const heatOf = (i) => { const v = Math.hypot(B.vx[i], B.vy[i]); return v / (v + 1.2); };
+  function newRun() {
+    let th;
+    do { th = [0, 1, 2].map(() => Math.random() * Math.PI * 2).sort((a, b) => a - b); }
+    while (Math.min(th[1] - th[0], th[2] - th[1], th[0] + Math.PI * 2 - th[2]) < 1.1);
+    B.n = 3;
+    let cx = 0, cy = 0;
+    for (let i = 0; i < 3; i++) {
+      const r = 0.6 + 0.4 * Math.random();
+      B.x[i] = r * Math.cos(th[i]); B.y[i] = r * Math.sin(th[i]);
+      B.vx[i] = 0; B.vy[i] = 0; B.m[i] = 1;
+      cx += B.x[i] / 3; cy += B.y[i] / 3;
+    }
+    let R = 0;
+    for (let i = 0; i < 3; i++) { B.x[i] -= cx; B.y[i] -= cy; R = Math.max(R, Math.hypot(B.x[i], B.y[i])); }
+    Object.assign(run, { R, age: 0, end: -1, reseedAll: true, clear: true });
+    view.r = R * 1.3;
+    last.fill(null);
+    tScale = accel();
+  }
+  newRun();
 
-  // The visitor can play: the pointer bends a and b anywhere on the page; a click on the hero jumps to another stretch of parameter space.
-  const bend = { x: 0, y: 0 }, bendTo = { x: 0, y: 0 };
-  addEventListener("pointermove", (e) => {
-    bendTo.x = (e.clientX / innerWidth - 0.5) * 0.5;
-    bendTo.y = (e.clientY / innerHeight - 0.5) * 0.5;
-  }, { passive: true });
-  document.addEventListener("pointerleave", () => { bendTo.x = 0; bendTo.y = 0; });
+  // Bodies' positions at the end of each dust step this frame.
+  const ck = Array.from({ length: 8 }, () => new Float32Array(MAXB * 3));
+  const strips = Array.from({ length: MAXB }, () => []);
+  function record(k) {
+    const c = ck[k];
+    for (let i = 0; i < MAXB; i++) { c[i * 3] = B.x[i]; c[i * 3 + 1] = B.y[i]; c[i * 3 + 2] = i < B.n ? B.m[i] : 0; }
+  }
+  function advance(T, thr) {
+    for (let i = 0; i < B.n; i++) {
+      strips[i].length = 0;
+      if (!last[i]) last[i] = [B.x[i], B.y[i], heatOf(i)];
+      strips[i].push(...last[i]);
+    }
+    let t = 0, k = 0, iter = 0;
+    while (t < T && iter < 4000) {
+      const mark = (k + 1) * T / K;
+      const dt = Math.max(1e-6, Math.min(0.02 * tScale, 0.01, mark - t));
+      stepB(dt); t += dt; iter++;
+      for (let i = 0; i < B.n; i++) {
+        // Lay points every thr along the step, so a long step leaves a solid line, not a dash.
+        const L = last[i], d = Math.hypot(B.x[i] - L[0], B.y[i] - L[1]);
+        if (d < thr) continue;
+        const h = heatOf(i), ux = (B.x[i] - L[0]) / d, uy = (B.y[i] - L[1]) / d;
+        for (let s = thr; s <= d && strips[i].length < MAXV * 3; s += thr) strips[i].push(L[0] + ux * s, L[1] + uy * s, h);
+        L[0] = strips[i][strips[i].length - 3]; L[1] = strips[i][strips[i].length - 2]; L[2] = h;
+      }
+      while (k < K && t >= (k + 1) * T / K - 1e-12) record(k++);
+    }
+    while (k < K) record(k++); // the step cap was hit on a very close pass: the masses run slow for a moment
+  }
+
+  // A click on the hero drops another mass, at rest, where you clicked. Past five, it starts again.
+  let map = { sx: 1, sy: 1, zx: 0, zy: 0 };
   const hero = document.querySelector(".hero");
   hero?.addEventListener("click", (e) => {
     if (e.target.closest("a, button")) return;
-    clock += 60 + Math.random() * 140;
-    check(params(clock));
+    if (B.n >= MAXB) { if (run.end < 0) run.end = 0.6; return; }
+    const r = cv.getBoundingClientRect();
+    const nx = ((e.clientX - r.left) / r.width) * 2 - 1, ny = 1 - ((e.clientY - r.top) / r.height) * 2;
+    const i = B.n++;
+    B.x[i] = (nx - map.zx) / map.sx; B.y[i] = (ny - map.zy) / map.sy;
+    B.vx[i] = 0; B.vy[i] = 0; B.m[i] = 1;
+    last[i] = null;
+    tScale = accel();
   });
 
+  let frame = 0, step = 0, slow = 0, last_t = 0, raf = 0, shown = false;
   function tick(now) {
     raf = requestAnimationFrame(tick);
-    const dt = last ? Math.min(0.1, (now - last) / 1000) : 1 / 60;
-    last = now;
+    const dt = last_t ? Math.min(0.05, (now - last_t) / 1000) : 1 / 60;
+    last_t = now;
     resize();
-    if (now - lastCheck > 200) { check(params(clock)); lastCheck = now; }
-    clock += dt * (health.ok ? 1 : 30);
-    const kb = 1 - Math.exp(-dt / 0.6);
-    bend.x += (bendTo.x - bend.x) * kb; bend.y += (bendTo.y - bend.y) * kb;
-    const p = params(clock);
-    p[0] += bend.x; p[1] += bend.y;
-    const k = 1 - Math.exp(-dt / 0.9);
-    for (const key of ["cx", "cy", "hx", "hy"]) view[key] += (health[key] - view[key]) * k;
+    if (broken) { cancelAnimationFrame(raf); raf = 0; return; }
 
-    // Frame the shape on the right on wide screens, so the words on the left stay readable.
-    const aspect = W / H, wide = aspect > 1.2;
-    const fill = wide ? 0.84 : 0.7;
-    let sy = fill / view.hy, sx = sy / aspect;
-    const room = wide ? 0.5 : 0.94;
-    if (view.hx * sx > room) { const f = room / (view.hx * sx); sx *= f; sy *= f; }
-    const shift = wide ? 0.42 : 0;
-    const lift = wide ? 0 : 0.25;
-
-    // Drop a step per frame while frames are coming in slow.
+    // Drop a dust step per frame while frames are coming in slow.
     slow = dt > 1 / 40 ? slow + dt : Math.max(0, slow - dt * 0.5);
     if (slow > 1 && K > 1) { K--; slow = 0; }
 
-    const decay = Math.pow(DECAY, dt * 144);
+    // Ending: fade out, then drop a new triangle. Runs also end after two minutes.
+    run.age += dt;
+    if (run.end < 0 && (run.age > 120 || escaped())) run.end = 1.2;
+    if (run.end >= 0) { run.end -= dt; if (run.end < 0) newRun(); }
+
+    // Frame the masses on the right on wide screens, so the words on the left stay readable.
+    let need = run.R * 1.3;
+    if (run.end < 0) for (let i = 0; i < B.n; i++) need = Math.max(need, Math.hypot(B.x[i], B.y[i]) * 1.1);
+    need = Math.min(need, run.R * 2.6);
+    view.r += (need - view.r) * (1 - Math.exp(-dt / 1.5));
+    const aspect = W / H, wide = aspect > 1.2;
+    let sy = (wide ? 0.86 : 0.7) / view.r, sx = sy / aspect;
+    const room = wide ? 0.5 : 0.94;
+    if (view.r * sx > room) { const f = room / (view.r * sx); sx *= f; sy *= f; }
+    map = { sx, sy, zx: wide ? 0.42 : 0, zy: wide ? 0 : 0.25 };
+
+    advance(SPEED * dt, 0.4 / (sy * H * 0.5));
+
     gl.bindFramebuffer(gl.FRAMEBUFFER, fbo);
     gl.viewport(0, 0, W, H);
+    if (run.clear) { gl.clearColor(0, 0, 0, 0); gl.clear(gl.COLOR_BUFFER_BIT); run.clear = false; }
     gl.enable(gl.BLEND);
+    const ending = run.end >= 0;
+    const dD = Math.pow(0.5, dt / (ending ? 0.12 : DUST_HALF)), dT = Math.pow(0.5, dt / (ending ? 0.25 : TRAIL_HALF));
     gl.useProgram(P_FADE.p);
     gl.bindVertexArray(emptyVao);
     gl.blendFunc(gl.ZERO, gl.CONSTANT_COLOR);
-    gl.blendColor(decay, decay, decay, decay);
+    gl.blendColor(dD, dD, dT, dT);
     gl.drawArrays(gl.TRIANGLES, 0, 3);
 
-    gl.useProgram(P_POINTS.p);
-    gl.uniform4f(P_POINTS.u.uP, p[0], p[1], p[2], p[3]);
-    gl.uniform1ui(P_POINTS.u.uReseed, Math.max(1, Math.round((health.ok ? 60 : 400) / K)));
-    gl.uniform4f(P_POINTS.u.uMap, sx, sy, -view.cx * sx + shift, -view.cy * sy + lift);
+    // The dust, K steps, each in the field of the masses at that moment.
     gl.blendFunc(gl.ONE, gl.ONE);
+    gl.useProgram(P_DUST.p);
+    gl.uniform1i(P_DUST.u.uNB, B.n);
+    gl.uniform1f(P_DUST.u.uDt, SPEED * dt / K);
+    gl.uniform1f(P_DUST.u.uR0, run.R * 1.5);
+    gl.uniform1f(P_DUST.u.uFar, run.R * 3.5);
+    gl.uniform4f(P_DUST.u.uMap, map.sx, map.sy, map.zx, map.zy);
     for (let s = 0; s < K; s++) {
       const src = step & 1, dst = src ^ 1;
-      gl.uniform1ui(P_POINTS.u.uFrame, step >>> 0);
+      gl.uniform3fv(P_DUST.u.uB, ck[s]);
+      gl.uniform1ui(P_DUST.u.uSeed, step >>> 0);
+      gl.uniform1ui(P_DUST.u.uReseed, run.reseedAll ? 10000 : Math.max(1, Math.round(30 / K)));
+      run.reseedAll = false;
       gl.bindVertexArray(vaos[src]);
       gl.bindTransformFeedback(gl.TRANSFORM_FEEDBACK, tfs[dst]);
       gl.beginTransformFeedback(gl.POINTS);
@@ -362,6 +466,27 @@ void main() {
       gl.bindTransformFeedback(gl.TRANSFORM_FEEDBACK, null);
       step++;
     }
+
+    // The masses' trails, then a brighter point where each one is now.
+    let n = 0;
+    const segs = [];
+    for (let i = 0; i < B.n; i++) {
+      const s = strips[i];
+      if (s.length >= 6) { trailData.set(s, n * 3); segs.push([n, s.length / 3]); n += s.length / 3; }
+    }
+    const heads = n;
+    for (let i = 0; i < B.n; i++) { trailData[n * 3] = B.x[i]; trailData[n * 3 + 1] = B.y[i]; trailData[n * 3 + 2] = heatOf(i); n++; }
+    gl.useProgram(P_TRAIL.p);
+    gl.uniform4f(P_TRAIL.u.uMap, map.sx, map.sy, map.zx, map.zy);
+    gl.bindVertexArray(trailVao);
+    gl.bindBuffer(gl.ARRAY_BUFFER, trailBuf);
+    gl.bufferSubData(gl.ARRAY_BUFFER, 0, trailData, 0, n * 3);
+    gl.uniform1f(P_TRAIL.u.uW, 1);
+    gl.uniform1f(P_TRAIL.u.uSize, Math.max(2, Math.round(H / 450))); // soft-edged, about a CSS pixel wide
+    for (const [off, cnt] of segs) gl.drawArrays(gl.POINTS, off + 1, cnt - 1); // the first is last frame's
+    gl.uniform1f(P_TRAIL.u.uW, 2.5);
+    gl.uniform1f(P_TRAIL.u.uSize, Math.max(2, Math.round(H / 500)));
+    gl.drawArrays(gl.POINTS, heads, n - heads);
     gl.bindVertexArray(null);
     gl.disable(gl.BLEND);
 
@@ -372,18 +497,17 @@ void main() {
     gl.activeTexture(gl.TEXTURE0);
     gl.bindTexture(gl.TEXTURE_2D, acc);
     gl.uniform1i(P_SHOW.u.uAcc, 0);
-    const mean = N * K / (1 - decay) / (W * H);
-    gl.uniform1f(P_SHOW.u.uInvMean, 1 / mean);
-    gl.uniform1f(P_SHOW.u.uLogMax, Math.log(1 + LOGMAX));
-    gl.uniform1f(P_SHOW.u.uPhase, clock * 0.06);
-    gl.uniform3fv(P_SHOW.u.uA, PAL_A.flat());
-    gl.uniform3fv(P_SHOW.u.uB, PAL_B.flat());
+    gl.uniform1f(P_SHOW.u.uInvMean, (W * H) * (1 - dD) / (N * K));
+    gl.uniform1f(P_SHOW.u.uLogD, LOGD);
+    gl.uniform1f(P_SHOW.u.uGainT, GAIN_T);
+    gl.uniform1f(P_SHOW.u.uLogT, LOGT);
+    gl.uniform3fv(P_SHOW.u.uH, HEAT.flat());
     gl.drawArrays(gl.TRIANGLES, 0, 3);
     frame++;
-    if (!shown && frame > 90) { shown = true; cv.classList.add("is-live"); }
+    if (!shown && frame > 60) { shown = true; cv.classList.add("is-live"); }
   }
 
   loop(cv.closest("[data-loop]"),
-    () => { if (!raf) { last = 0; raf = requestAnimationFrame(tick); } },
+    () => { if (!raf) { last_t = 0; raf = requestAnimationFrame(tick); } },
     () => { cancelAnimationFrame(raf); raf = 0; });
 })();

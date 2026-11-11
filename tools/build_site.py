@@ -133,11 +133,11 @@ PAGES = [
     status="Running as a Windows service", stack_line="Node, Python, OpenCL, MCP, Mandelbulber 2, Fraktaler 3",
     hero=("three-body.jpg", "The three-body problem, mapped: the colour at each point is how long until the sixth close pass.", "A symmetrical blue fractal of swirling bands around two bright discs"),
     about=["Fractal MCP is a server on my PC that exposes the renderers I have collected (Mandelbulber 2, Fraktaler 3, a three-body simulator, a Clifford attractor engine, a nebulabrot renderer) as tools Claude can call. I ask for a picture in a sentence, Claude picks the tool and the parameters, the GPU renders it, and the image comes back into the conversation.",
-           "The server is token-protected and set up so two friends can point their own Claude at it. Every render on the home page came out of it, and the live hero is the same Clifford maths running in your browser."],
+           "The server is token-protected and set up so two friends can point their own Claude at it. Every render on the home page came out of it, and the live hero runs the same three-body maths in your browser."],
     did=["Chose and installed the renderers, and had Claude Code wrap each one as a tool with safe parameters: no file paths, one GPU job at a time, output confined to one folder.",
          "Built the three-body and Clifford renderers in Python and OpenCL, including the palettes.",
          "Wrote the hand-over page so friends could set it up.",
-         "Ported the Clifford attractor to WebGL for this site’s hero, and to a live desktop wallpaper."],
+         "Brought the three-body maths to WebGL for this site’s live hero."],
     extra=term(["> render a clifford attractor in espresso’s eye colour, silk-like, 4k",
                 "fractal.clifford  a=-1.7 b=1.3 c=-0.1 d=-1.2  palette=espresso  size=3840x2160",
                 "  queued, 1 of 1 · GPU · 1.2 billion points",
@@ -156,7 +156,7 @@ THIS_SITE = dict(slug="this-site", title="This site",
     lead="How espressothecat.com was made.",
     status="Live", stack_line="HTML, CSS, WebGL2, GitHub Pages",
     hero=None,
-    about=["Hand-written HTML and CSS, no framework, no build step. The hero is a Clifford attractor drawn live in WebGL2 from the same maths as the Fractal MCP renders; it pauses if you ask it to, or if your system prefers reduced motion. The fonts are served from the site, not from Google. The only script from elsewhere is a cookie-free visitor counter.",
+    about=["Hand-written HTML and CSS, no framework, no build step. The hero is three equal masses released from rest, with a cloud of dust falling among them, simulated live in WebGL2 from the same maths as the Fractal MCP three-body renders; it pauses if you ask it to, or if your system prefers reduced motion. The fonts are served from the site, not from Google. The only script from elsewhere is a cookie-free visitor counter.",
            "It was built in Claude Code with a design skill I keep, and checked in headless Chrome at desktop and phone widths before each push."],
     did=["Briefed and directed the build, then rewrote the copy by hand after the first version read like a brochure.",
          "Took every screenshot from demo modes with made-up data, so nothing private is on the page.",
@@ -190,7 +190,7 @@ FOOT_SLIM = """<footer class="footer footer--slim">
 
 def page(p, n, total, prev, nxt):
     hero = ""
-    og = f"{ORIGIN}/assets/clifford-still.jpg"
+    og = f"{ORIGIN}/assets/three-body-still.jpg"
     if p.get("schematic"):
         hero = ('<figure class="case-hero case-hero--schematic"><picture><source media="(max-width: 40rem)" srcset="/assets/back-office-tools-phone.svg" width="700" height="680">'
                 '<img src="/assets/back-office-tools.svg" width="1400" height="680" alt="A schematic: four kinds of repeat work on the left, each with an arrow to the tool that took it over"></picture>'
@@ -334,7 +334,7 @@ INDEX = f"""<!doctype html>
 <meta name="theme-color" content="#1a1611">
 <meta property="og:title" content="Espresso the cat">
 <meta property="og:description" content="I build the tools a team is missing. UK, remote, available now.">
-<meta property="og:image" content="{ORIGIN}/assets/clifford-still.jpg">
+<meta property="og:image" content="{ORIGIN}/assets/three-body-still.jpg">
 <link rel="icon" href="assets/favicon.svg" type="image/svg+xml">
 <link rel="stylesheet" href="style.css">
 <script>document.documentElement.classList.add('js');</script>
@@ -343,7 +343,7 @@ INDEX = f"""<!doctype html>
 <a class="skip" href="#work">Skip to the work</a>
 
 <figure class="ground" data-loop aria-hidden="true">
-  <img src="assets/clifford-still.jpg" width="2560" height="1440" alt="" fetchpriority="high">
+  <img src="assets/three-body-still.jpg" width="2560" height="1440" alt="" fetchpriority="high">
   <canvas id="silk"></canvas>
 </figure>
 
@@ -365,7 +365,7 @@ INDEX = f"""<!doctype html>
       </div>
     </div>
     <div class="hero__foot">
-      <p>A Clifford attractor, drawn live on your graphics card. Move to bend it. Click for another.</p>
+      <p>Three equal masses let go from rest, live on your graphics card. Click to add one.</p>
       <button type="button" data-loop-toggle aria-controls="silk">Pause</button>
     </div>
   </section>
