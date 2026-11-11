@@ -1,8 +1,10 @@
 "use strict";
 // Clifford attractors drifting on the GPU, adapted from the Clifford Silk wallpaper. It is the ground of the whole page.
 //   x' = sin(a y) + c cos(a x),   y' = sin(b x) + d cos(b y)
-// Points live on the GPU and take one step of the map per frame (transform feedback), drawn onto a canvas that fades a
-// little every frame. a, b, c, d drift slowly; a CPU check spots shapes that collapse and hurries the drift past them.
+// Points live on the GPU and take several steps of the map per frame (transform feedback), each landing added into a
+// float canvas that fades a little every frame. Brightness is the log of how often the map lands on a pixel; colour is
+// the mean direction of those jumps, between Espresso's eye green and her amber. a, b, c, d drift slowly; a CPU check
+// spots shapes that collapse and hurries the drift past them.
 // Runs only while on screen, with the tab visible, without reduced motion, and until the visitor pauses it.
 
 (() => {
@@ -118,49 +120,62 @@
   const floatBlend = !!gl.getExtension("EXT_float_blend");
   const [IFMT, TYPE] = floatBlend ? [gl.RGBA32F, gl.FLOAT] : [gl.RGBA16F, gl.HALF_FLOAT];
 
-  // Espresso: the ground of the page, through her eye colour, to near white.
-  const PAL = [[0.11, 0.09, 0.07], [0.16, 0.12, 0.07], [0.36, 0.38, 0.08], [0.72, 0.76, 0.18], [0.92, 0.93, 0.55], [1, 1, 0.92]];
+  // Espresso: the ground of the page, up through her eye colour (A) or her amber (B), to near white.
+  // Which ramp a pixel uses comes from the maths: the direction the map throws the points that land there.
+  const PAL_A = [[0.11, 0.09, 0.07], [0.19, 0.19, 0.06], [0.42, 0.48, 0.09], [0.73, 0.81, 0.22], [0.93, 0.96, 0.6], [1, 1, 0.93]];
+  const PAL_B = [[0.11, 0.09, 0.07], [0.23, 0.12, 0.06], [0.56, 0.29, 0.09], [0.87, 0.57, 0.2], [0.98, 0.85, 0.58], [1, 0.98, 0.92]];
   const N = small.matches ? 140000 : 320000;
-  const DECAY = 0.965;
+  const DECAY = 0.972;
+  // Map steps per frame: each step lands every point somewhere new on the attractor. Backs off on slow machines.
+  let K = small.matches ? 3 : 5;
 
   const HASH = `uint hash(uint x) { x ^= x >> 16u; x *= 0x7feb352du; x ^= x >> 15u; x *= 0x846ca68bu; x ^= x >> 16u; return x; }`;
   const VS_POINTS = `#version 300 es
 precision highp float; precision highp int;
 in vec2 aPos;
 uniform vec4 uP; uniform uint uFrame; uniform uint uReseed; uniform vec4 uMap;
-out vec2 vPos; out float vRight;
+out vec2 vPos; out vec2 vOri;
 ${HASH}
 vec2 stepC(vec2 q) { return vec2(sin(uP.x * q.y) + uP.z * cos(uP.x * q.x), sin(uP.y * q.x) + uP.w * cos(uP.y * q.y)); }
 void main() {
   vec2 p = aPos;
   uint h = hash(uint(gl_VertexID) ^ (uFrame * 0x9E3779B9u));
-  if ((h % 1000u) < uReseed || any(isnan(p)) || abs(p.x) > 8.0 || abs(p.y) > 8.0) {
+  if ((h % 10000u) < uReseed || any(isnan(p)) || abs(p.x) > 8.0 || abs(p.y) > 8.0) {
     uint h2 = hash(h + 0x68E31DA4u);
     p = vec2(float(h & 0xffffu), float(h2 & 0xffffu)) / 32768.0 - 1.0;
     for (int i = 0; i < 12; i++) p = stepC(p);
   }
   vec2 n = stepC(p);
-  vRight = n.x > p.x ? 1.0 : 0.0;
+  // The orientation of the jump (angle doubled, so opposite jumps agree) as cos 2t, sin 2t.
+  vec2 d = n - p;
+  vec2 u = d / max(length(d), 1e-6);
+  vOri = vec2(u.x * u.x - u.y * u.y, 2.0 * u.x * u.y);
   vPos = n;
   gl_Position = vec4(n * uMap.xy + uMap.zw, 0.0, 1.0);
   gl_PointSize = 1.0;
 }`;
   const FS_POINTS = `#version 300 es
-precision highp float; in float vRight; out vec4 o; void main() { o = vec4(1.0, vRight, 0.0, 0.0); }`;
+precision highp float; in vec2 vOri; out vec4 o; void main() { o = vec4(1.0, vOri, 0.0); }`;
   const VS_QUAD = `#version 300 es
 void main() { vec2 p = vec2(float((gl_VertexID << 1) & 2), float(gl_VertexID & 2)); gl_Position = vec4(p * 2.0 - 1.0, 0.0, 1.0); }`;
   const FS_FADE = `#version 300 es
 precision highp float; out vec4 o; void main() { o = vec4(0.0); }`;
   const FS_SHOW = `#version 300 es
 precision highp float;
-uniform sampler2D uAcc; uniform float uGain; uniform vec3 uPal[6];
+uniform sampler2D uAcc; uniform float uInvMean; uniform float uLogMax; uniform float uPhase; uniform vec3 uA[6]; uniform vec3 uB[6];
 out vec4 o;
-vec3 pal(float t) { t = clamp(t, 0.0, 1.0) * 5.0; int i = int(min(floor(t), 4.0)); return mix(uPal[i], uPal[i + 1], t - float(i)); }
+vec3 rampA(float t) { t = clamp(t, 0.0, 1.0) * 5.0; int i = int(min(floor(t), 4.0)); return mix(uA[i], uA[i + 1], t - float(i)); }
+vec3 rampB(float t) { t = clamp(t, 0.0, 1.0) * 5.0; int i = int(min(floor(t), 4.0)); return mix(uB[i], uB[i + 1], t - float(i)); }
 void main() {
   vec4 a = texelFetch(uAcc, ivec2(gl_FragCoord.xy), 0);
-  float v = pow(1.0 - exp(-a.r * uGain), 0.62);
-  float r = a.r > 0.0 ? a.g / a.r - 0.5 : 0.0;
-  o = vec4(pal(clamp(v * 0.92 + 0.16 * r, 0.0, 1.0)), 1.0);
+  // Brightness: log of how often the map lands here, so the folds burn white and single threads stay fine.
+  float v = clamp(log(1.0 + a.r * uInvMean) / uLogMax, 0.0, 1.0);
+  v = v * v * (3.0 - 2.0 * v);
+  // Hue: the mean orientation of the jumps that landed here, turning slowly.
+  vec2 m = a.r > 0.0 ? a.gb / a.r : vec2(0.0);
+  float k = clamp(length(m), 0.0, 1.0);
+  float s = k > 1e-4 ? 0.5 + 0.5 * k * cos(atan(m.y, m.x) + uPhase) : 0.5;
+  o = vec4(mix(rampA(v), rampB(v), s), 1.0);
 }`;
 
   function compile(type, src) {
@@ -223,7 +238,7 @@ void main() {
 
   let acc = null, fbo = null, W = 0, H = 0;
   function resize() {
-    const dpr = Math.min(window.devicePixelRatio || 1, 1.5);
+    const dpr = Math.min(window.devicePixelRatio || 1, small.matches ? 1.5 : 2);
     const r = cv.getBoundingClientRect();
     const w = Math.max(1, Math.round(r.width * dpr)), h = Math.max(1, Math.round(r.height * dpr));
     if (w === W && h === H) return;
@@ -275,7 +290,8 @@ void main() {
   }
 
   let clock = (Date.now() / 1000) % 100000;
-  let frame = 0, last = 0, lastCheck = 0, raf = 0, shown = false;
+  let frame = 0, step = 0, slow = 0, last = 0, lastCheck = 0, raf = 0, shown = false;
+  const LOGMAX = small.matches ? 28 : 48; // hits per pixel, as a multiple of the mean, that reads as full white
   check(params(clock));
   const view = { cx: health.cx, cy: health.cy, hx: health.hx, hy: health.hy };
 
@@ -316,6 +332,10 @@ void main() {
     const shift = wide ? 0.42 : 0;
     const lift = wide ? 0 : 0.25;
 
+    // Drop a step per frame while frames are coming in slow.
+    slow = dt > 1 / 40 ? slow + dt : Math.max(0, slow - dt * 0.5);
+    if (slow > 1 && K > 1) { K--; slow = 0; }
+
     const decay = Math.pow(DECAY, dt * 144);
     gl.bindFramebuffer(gl.FRAMEBUFFER, fbo);
     gl.viewport(0, 0, W, H);
@@ -326,19 +346,22 @@ void main() {
     gl.blendColor(decay, decay, decay, decay);
     gl.drawArrays(gl.TRIANGLES, 0, 3);
 
-    const src = frame & 1, dst = src ^ 1;
     gl.useProgram(P_POINTS.p);
     gl.uniform4f(P_POINTS.u.uP, p[0], p[1], p[2], p[3]);
-    gl.uniform1ui(P_POINTS.u.uFrame, frame >>> 0);
-    gl.uniform1ui(P_POINTS.u.uReseed, health.ok ? 6 : 40);
+    gl.uniform1ui(P_POINTS.u.uReseed, Math.max(1, Math.round((health.ok ? 60 : 400) / K)));
     gl.uniform4f(P_POINTS.u.uMap, sx, sy, -view.cx * sx + shift, -view.cy * sy + lift);
     gl.blendFunc(gl.ONE, gl.ONE);
-    gl.bindVertexArray(vaos[src]);
-    gl.bindTransformFeedback(gl.TRANSFORM_FEEDBACK, tfs[dst]);
-    gl.beginTransformFeedback(gl.POINTS);
-    gl.drawArrays(gl.POINTS, 0, N);
-    gl.endTransformFeedback();
-    gl.bindTransformFeedback(gl.TRANSFORM_FEEDBACK, null);
+    for (let s = 0; s < K; s++) {
+      const src = step & 1, dst = src ^ 1;
+      gl.uniform1ui(P_POINTS.u.uFrame, step >>> 0);
+      gl.bindVertexArray(vaos[src]);
+      gl.bindTransformFeedback(gl.TRANSFORM_FEEDBACK, tfs[dst]);
+      gl.beginTransformFeedback(gl.POINTS);
+      gl.drawArrays(gl.POINTS, 0, N);
+      gl.endTransformFeedback();
+      gl.bindTransformFeedback(gl.TRANSFORM_FEEDBACK, null);
+      step++;
+    }
     gl.bindVertexArray(null);
     gl.disable(gl.BLEND);
 
@@ -349,9 +372,12 @@ void main() {
     gl.activeTexture(gl.TEXTURE0);
     gl.bindTexture(gl.TEXTURE_2D, acc);
     gl.uniform1i(P_SHOW.u.uAcc, 0);
-    const mean = N / (1 - decay) / (W * H);
-    gl.uniform1f(P_SHOW.u.uGain, 0.3 / mean);
-    gl.uniform3fv(P_SHOW.u.uPal, PAL.flat());
+    const mean = N * K / (1 - decay) / (W * H);
+    gl.uniform1f(P_SHOW.u.uInvMean, 1 / mean);
+    gl.uniform1f(P_SHOW.u.uLogMax, Math.log(1 + LOGMAX));
+    gl.uniform1f(P_SHOW.u.uPhase, clock * 0.06);
+    gl.uniform3fv(P_SHOW.u.uA, PAL_A.flat());
+    gl.uniform3fv(P_SHOW.u.uB, PAL_B.flat());
     gl.drawArrays(gl.TRIANGLES, 0, 3);
     frame++;
     if (!shown && frame > 90) { shown = true; cv.classList.add("is-live"); }

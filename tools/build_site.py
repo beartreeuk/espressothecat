@@ -95,22 +95,6 @@ PAGES = [
             "Writing things down so the next session, or a colleague, can pick up where I left off"],
     gallery=[]),
 
-  dict(slug="metalol", title="MetaLoL",
-    lead="A new front end for a public League of Legends stats site, the sister of MetaTFT.",
-    status="On a branch, awaiting the owner’s review", stack_line="React 19, TypeScript, Vite",
-    hero=("metalol-tier-list.jpg", "The champion tier list in the remake. Live public game data.", "A dark table of League of Legends champions ranked by tier with win rate, pick rate and games columns"),
-    about=["MetaLoL is a public stats site for League of Legends, run by the same person as MetaTFT, one of the main stats sites for Teamfight Tactics. I contribute under my own GitHub account. In 2025 I made small fixes to the champion page on the live site. In September 2026 I started a ground-up remake of the front end on a branch: a new look, a tier list, champion pages, a header champion finder, a phone layout and a test suite.",
-           "The owner has not reviewed it yet, so it is not live."],
-    did=["Mapped the three repos (front end, API, crawler) and reported two security problems to the owner, who fixed them.",
-         "Rebuilt the front end against the live API: tier list, champion pages, matchup views, header search, page titles and metadata.",
-         "Checked the phone layout at real sizes. No sideways scroll at 390 pixels.",
-         "Typecheck, lint, 31 tests and a production build all pass."],
-    stack=["React 19 and TypeScript", "Vite, with a test suite", "Working against someone else’s API and data without cluster access", "Claude Code for the build"],
-    skills=["Working in someone else’s codebase, to their conventions", "Front-end design that reads well on a phone", "Finishing: tests, titles and metadata, not just the pretty parts", "Reporting a problem to an owner clearly and leaving the fix to them"],
-    gallery=[("metalol-home.jpg", "The home page.", "The MetaLoL home page in the remake, dark, with a champion search"),
-             ("metalol-champion.jpg", "A champion page.", "A champion page with win rate, matchups and builds"),
-             ("metalol-phone.jpg", "The tier list on a phone.", "The tier list at phone width", "tall")]),
-
   dict(slug="needle-drop", title="Needle Drop",
     lead="A keyboard DJ rhythm game with roguelike runs, in Godot.",
     status="In progress, started November 2026", stack_line="Godot 4.7, GDScript, Python for the music",
@@ -302,7 +286,6 @@ ROWS = [
   ("talent-radar", "Talent Radar", "Finds engineers from their public work and says, in plain English, why they fit the job. Built with a partner; I own the product side, the screens and the privacy paperwork.", "Private", "React, Go, Postgres", None),
   ("back-office", "Back-office tools", "Four internal tools for a UK vehicle-leasing broker, built on the job: cancellations, invoicing, marketing uploads and an order integration that carried 215 orders. All still in use when I left.", "In use", "Claude Code, internal tools", "back-office-tools.svg"),
   ("harness", "A harness for Claude Code", "Everything I wired around Claude Code so it works like a colleague: briefs each session, blocks dangerous commands, reviews every commit, writes up the day, takes instructions by voice.", "Daily use", "Node, SQLite, Ollama", "harness-overview.jpg"),
-  ("metalol", "MetaLoL", "A new front end for a public League of Legends stats site, sister of MetaTFT. Tier list, champion pages, a phone layout and tests.", "On a branch", "React 19, TypeScript, Vite", "metalol-tier-list.jpg"),
   ("needle-drop", "Needle Drop", "A keyboard DJ rhythm game with roguelike runs: left hand mixes, right hand beatmatches, every record switch scores like a card game.", "In progress", "Godot 4.7, GDScript", None),
   ("ollama-mcp", "Local models for Claude", "Two small servers that hand long files to a model on my own graphics card and send back only the answer. Private data stays on the machine.", "Running", "Node, MCP, Ollama", None),
   ("fractal-mcp", "Fractal MCP", "A render farm for maths art that Claude can call like a tool: ask for a fractal in a sentence, get the picture back from my graphics card.", "Running", "Node, Python, OpenCL", "three-body.jpg"),
@@ -422,7 +405,6 @@ INDEX = f"""<!doctype html>
       <dl class="lately">
         <div><dt>Oct 2026 to now</dt><dd><strong>Talent Radar</strong>, with a partner, for a recruiter. Product, screens, the UK GDPR paperwork.</dd></div>
         <div><dt>Dec 2025 to Oct 2026</dt><dd><strong>Operations, UK vehicle-leasing broker.</strong> The internal ticket queue, order admin for nine salespeople, hands-on IT, and from August the front end of the new company website. Built the four tools above on the side.</dd></div>
-        <div><dt>2025 to now</dt><dd><strong>MetaLoL</strong>, contributor. Small fixes on the live site, then a front-end remake on a branch.</dd></div>
       </dl>
     </div>
   </section>

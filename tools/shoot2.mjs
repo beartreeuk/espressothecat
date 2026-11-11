@@ -5,7 +5,7 @@ import { writeFileSync, mkdirSync } from 'node:fs';
 import { join } from 'node:path';
 
 const [base, outdir] = process.argv.slice(2);
-const pages = ['index.html', 'work/back-office.html', 'work/talent-radar.html', 'work/harness.html', 'work/needle-drop.html', 'work/metalol.html', 'work/ollama-mcp.html', 'work/fractal-mcp.html', 'work/this-site.html', 'work/demo/talent-radar.html'];
+const pages = ['index.html', 'work/back-office.html', 'work/talent-radar.html', 'work/harness.html', 'work/needle-drop.html', 'work/ollama-mcp.html', 'work/fractal-mcp.html', 'work/this-site.html', 'work/demo/talent-radar.html'];
 const sizes = [[1440, 900], [390, 844]];
 mkdirSync(outdir, { recursive: true });
 const port = 9400 + Math.floor(Math.random() * 100);
